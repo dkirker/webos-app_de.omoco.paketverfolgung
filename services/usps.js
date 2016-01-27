@@ -2,11 +2,11 @@ function USPS() {
 }
 
 USPS.prototype.getAuthor = function() {
-	return "Sebastian Hammerl";
+	return "Sebastian Hammerl, Donald Kirker";
 }
 
 USPS.prototype.getVersion = function() {
-	return "1.0";
+	return "1.1";
 }
 
 USPS.prototype.getColor = function() {
@@ -37,60 +37,76 @@ USPS.prototype.getDetails = function() {
 USPS.prototype.getDetailsRequestSuccess = function(response) {
 	var responseText = response.responseText;
 	
-	var responseText2 = responseText.split("<div id=\"track-results\">")[1];
-	responseText2 = responseText2.split("<div id=\"tc-another\">")[0];
-	
+	//var responseText2 = responseText.split("<tbody class=\"details\">")[1];
+	var statusText = responseText.split("<div class=\"progress-indicator\">")[1].split("<h2 class=\"hide-fromsighted\">")[1].split("</h2>")[0];
+
+	// Real USPS statuses:
+	//<div class="progress-indicator">
+	//	<h2 class="hide-fromsighted">in-transit</h2>
+	//</div>
+	//
+	// Values and Package Tracker values:
+	// pre-shipment: 1
+	// accepted: 2
+	// in-transit: 3
+	// in-transit + special: 4
+	// delivered: 5
+	// error: 0
+	// seized: 0
+	// archived: 0
+
+
 	var status = 0;
-	if(responseText2.split("Accept").length > 1 || responseText2.split("Info Received").length > 1 || responseText2.split("Picked Up").length > 1) {
+	if (statusText.indexOf("pre-shipment") != -1) {
 		status = 1;
-	}
-	if(responseText2.split("GIBTS ES WOHL NICHT").length > 1 || responseText2.split("Arrived Shipping Partner Facility").length > 1) {
+	} else if (statusText.indexOf("accepted") != -1) {
 		status = 2;
-	}
-	if(responseText2.split("Process").length > 1 || responseText2.split("Depart").length > 1 || responseText2.split("Sorting").length > 1) {
+	} else if (statusText.indexOf("in-transit") != -1) {
 		status = 3;
-	}
-	if(responseText2.split("Delivery").length > 1) {
+	} /*else if (statusText.indexOf("out-for-delivery") != -1) {
 		status = 4;
-	}
-	if(responseText2.split("Delivered").length > 1) {
+	}*/ else if (statusText.indexOf("delivered") != -1) {
 		status = 5;
-	}
-	if(responseText2.split("Sorry, there's no information for that number.").length > 1 || responseText2.split("Delivery status information is not available").length > 1) {
-		status = -1;
+	} else {
+		status = 0;
+		this.callbackStatus(status);
 	}
 
-	this.callbackStatus(status);
-
-	if(status > 0) {
+	if (status > 0) {
 		var details = [];
 		
-		var tmpFirstDetails = responseText.split("<tr class=\"shaded\">")[1];
-		var tmpFirstDate = tmpFirstDetails.split("<p class=\"date-time sortable\">")[1];
-		tmpFirstDate = tmpFirstDate.split("\n")[1];
-		var tmpFirstLoc = tmpFirstDetails.split("<p class=\"location sortable\">")[1];
-		tmpFirstLoc = tmpFirstLoc.split("\n")[1];
-		var tmpFirstNotes = tmpFirstDetails.split("<p>")[2];
-		tmpFirstNotes = tmpFirstNotes.split("</p>")[0];
-		details.push({date: tmpFirstDate, location: tmpFirstLoc, notes: tmpFirstNotes});
-		
-		var details2 = responseText.split("<tr class=\"details single-details\">");
-		for (var i=1; i<details2.length; i++) {
-			var tmpDate = details2[i].split("<p>")[2];
-			tmpDate = tmpDate.split("\n")[1];
-			var tmpLoc = details2[i].split("<p>")[3];
-			tmpLoc = tmpLoc.split("\n")[1];
-			var tmpNotes = details2[i].split("<p>")[1];
-			tmpNotes = tmpNotes.split("</p>")[0];
-			details.push({date: tmpDate, location: tmpLoc, notes: tmpNotes});
+		var detailsText = responseText.split("detail-wrapper");
+		for (var i = 1; i < detailsText.length; i++) {
+			var detailsSplit = detailsText[i].split("<td class=\"date-time\">");
+
+			var tmpDateStr = detailsSplit[1].split("<p>")[1].split("</p>")[0].replace(/[\r]/g, " ").replace(/[^,: a-zA-Z0-9]/g, "").trim();
+
+			var tmpLoc = "";
+			var tmpNotes = "";
+			if (i == 1) {
+				tmpLoc = detailsSplit[1].split("<td class=\"location\">")[1].split("<p>")[1].split("</td>")[0].replace(/[\r]/g, " ").replace(/&nbsp;/g, " ").trim();
+				tmpNotes = detailsSplit[1].split("<td class=\"status\">")[1].split("<p")[1].split("</p>")[0].split(">")[1].replace(/[\r]/g, " ").replace(/&nbsp;/g, " ").trim();
+			
+				if (tmpNotes.indexOf("Out for Delivery") != -1) {
+					status = 4;
+				} else if (tmpNotes.indexOf("Delivery status not updated") != -1) {
+					status = 0;
+				}			
+			} else {
+                tmpLoc = detailsSplit[1].split("<td class=\"location\">")[1].split("<p>")[1].split("</p>")[0].replace(/[\r]/g, " ").replace(/&nbsp;/g, " ").trim();
+                tmpNotes = detailsSplit[1].split("<td class=\"status\">")[1].split("<span")[1].split("</span>")[0].split(">")[1].replace(/[\r]/g, " ").replace(/&nbsp;/g, " ").trim();
+			}
+
+			details.push({date: tmpDateStr, location: tmpLoc, notes: tmpNotes});
 		}
 		
+		this.callbackStatus(status);
 		this.callbackDetails(details.clone());	
 	}
 };
 
 USPS.prototype.getDetailsRequestFailure = function(response) {
-	this.callbackError("Konnte Seite nicht laden.");
+	this.callbackError($L("Error loading data from USPS."));
 };
 
 registerService("USPS", new USPS());

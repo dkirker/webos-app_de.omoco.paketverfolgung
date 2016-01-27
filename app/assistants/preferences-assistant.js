@@ -196,7 +196,7 @@ PreferencesAssistant.prototype.setup = function() {
 	// -- LITE STOPP --
 	
 	//MANAGE SERVICES
-	//this.controller.listen('manageservices',Mojo.Event.tap,this.manageServices.bind(this));
+	this.controller.listen('manageservices',Mojo.Event.tap,this.manageServices.bind(this));
 	
 	this.controller.listen('resetall',Mojo.Event.tap,this.resetAll.bind(this));
 	

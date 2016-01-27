@@ -90,7 +90,7 @@ UPS.prototype.getDetailsRequestSuccessMobile = function(response) {
         status = 4;
     }
     if(statusText.split("UPS hat die Sendung zugestellt").length > 1 || statusText.split("UPS has delivered the shipment").length > 1 ||
-	   statusText.split("Package picked up at UPS Access Point").length > 1) {
+	   statusText.split("Delivered").length > 1 || statusText.split("Package picked up at UPS Access Point").length > 1) {
         status = 5;
     }
     if(statusText.split("1Z9999999999999999").length > 1) {

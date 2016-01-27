@@ -2,11 +2,11 @@ function FedEx() {
 }
 
 FedEx.prototype.getAuthor = function() {
-	return "Sebastian Hammerl";
+	return "Donald Kirker";
 }
 
 FedEx.prototype.getVersion = function() {
-	return "1.0";
+	return "1.1";
 }
 
 FedEx.prototype.getColor = function() {
@@ -27,53 +27,85 @@ FedEx.prototype.getTrackingUrl = function() {
 }
 
 FedEx.prototype.getDetails = function() {
-	var request = new Ajax.Request(this.getTrackingUrl(), {
-		method: 'get',
+	var locale = "en_US";
+	var data = {
+		"TrackPackagesRequest": {
+			"appType": "wtrk",
+			"uniqueKey": "",
+			"processingParameters": {
+				"anonymousTransaction": true,
+				"clientId": "WTRK",
+				"returnDetailedErrors": true,
+				"returnLocalizedDateTime": true
+			},
+			"trackingInfoList": [{
+				"trackNumberInfo": {
+					"trackingNumber": this.id,
+					"trackingQualifier": "",
+					"trackingCarrier": ""
+				}
+			}]
+		}
+	};
+
+	/*
+	if (LANG == "de")
+		locale = "de_DE";
+	*/
+
+	var dataStringified = Object.toJSON(data);
+	Mojo.Log.info("Data: ", dataStringified);
+
+	var request = new Ajax.Request("https://www.fedex.com/trackingCal/track", {
+		method: 'post',
+		parameters: {"data": dataStringified, "action": "trackpackages", "locale": locale, "format": "json", "version": "99"},
 		evalJS: 'false',
-		evalJSON: 'false',
+		evalJSON: 'true',
 		onSuccess: this.getDetailsRequestSuccess.bind(this),
 		onFailure: this.getDetailsRequestFailure.bind(this)
 	});
 };
 
 FedEx.prototype.getDetailsRequestSuccess = function(response) {
-	var responseText = response.responseText;
-	
+	var json = response.responseJSON;
+	if (!json && response.responseText) {
+		json = Mojo.parseJSON(response.responseText);
+	}
+	if (!json || !json.TrackPackagesResponse ||
+		!json.TrackPackagesResponse.packageList || !json.TrackPackagesResponse.packageList[0]) {
+			this.callbackStatus(-1);
+			return;
+	}
+	var errorCode = json.TrackPackagesResponse.packageList[0].errorList[0].code;
+	var keyStatus = json.TrackPackagesResponse.packageList[0].keyStatus;
 	var status = 0;
-	if(responseText.split("progress_initiated_ltr.gif").length > 1) {
-		status = 1;
-	}
-	if(responseText.split("progress_pickedup_ltr.gif").length > 1) {
-		status = 2;
-	}
-	if(responseText.split("progress_onschedule_ltr.gif").length > 1) {
-		status = 3;
-	}
-	if(responseText.split("progress_intransit_ltr.gif").length > 1 || responseText.split("progress_exception_ltr.gif").length > 1) {
-		status = 4;
-	}
-	if(responseText.split("progress_delivered_ltr.gif").length > 1) {
-		status = 5;
-	}
-	if(responseText.split("Ungültig").length > 1 || responseText.split("Nicht gefunden").length > 1 || responseText.split("Invalid").length > 1 || responseText.split("Not Found").length > 1) {
+
+	Mojo.Log.info("errorCode: ", errorCode, "keyStatus: ", keyStatus);
+
+	// TODO: I am only certain on "errorCode" and "keyStatus" == "In transit"
+	if (errorCode != 0) {
 		status = -1;
+	} else if (keyStatus.indexOf("Initiated") != -1) {
+		status = 1;
+	} else if (keyStatus.indexOf("Picked") != -1) {
+		status = 2;
+	} else if (keyStatus.indexOf("On schedule") != -1) {
+		status = 3;
+	} else if (keyStatus.indexOf("In transit") != -1 || keyStatus.indexOf("Exception") != -1) {
+		status = 4;
+	} else if (keyStatus.indexOf("Delivered") != -1) {
+		status = 5;
 	}
 
 	this.callbackStatus(status);
-
-
-	var detailsVar = responseText.split("detailInfoObject")[1];
-	detailsVar = detailsVar.split("\"scans\":")[1];
-	detailsVar = detailsVar.split("],\"")[0];
-	detailsVar =  detailsVar + "]";
-
-	detailsVar = detailsVar.evalJSON();
 	
-	if(status > 0) {
+	if (status > 0) {
+		var detailsVar = json.TrackPackagesResponse.packageList[0].scanEventList;
 		var details = [];
-		for (var i=0; i<detailsVar.length; i++) {
-			var tmpDate = detailsVar[i].scanDate + " " + detailsVar[i].scanTime;
-			details.push({date: tmpDate, location: detailsVar[i].scanLocation, notes: detailsVar[i].scanStatus});
+		for (var i = 0; i < detailsVar.length; i++) {
+			var tmpDate = detailsVar[i].date + " " + detailsVar[i].time + " " + detailsVar[i].gmtOffset;
+			Mojo.Log.info("date: ", tmpDate, " location: ", detailsVar[i].scanLocation, " notes: ", detailsVar[i].status);
+			details.push({date: tmpDate, location: detailsVar[i].scanLocation, notes: detailsVar[i].status});
 		}
 		
 		this.callbackDetails(details.clone());	
@@ -81,6 +113,8 @@ FedEx.prototype.getDetailsRequestSuccess = function(response) {
 };
 
 FedEx.prototype.getDetailsRequestFailure = function(response) {
+	Mojo.Log.info("Status: ", response.statusText, " Response: ", response.responseText, " Headers: ", Object.toJSON(response.headerJSON), "Response JSON: ", Object.toJSON(response.responseJSON));
+
 	this.callbackError("Konnte Seite nicht laden.");
 };
 

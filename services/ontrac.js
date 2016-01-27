@@ -21,7 +21,7 @@ OnTrac.prototype.init = function(id, callbackStatus, callbackDetails, callbackEr
 };
 
 OnTrac.prototype.getTrackingUrl = function() {
-	return "http://www.ontrac.com/trackingdetail.asp?tracking=" + this.id;
+	return "http://www.ontrac.com/trackingdetail.asp?tracking=" + this.id + "&run=1";
 }
 
 OnTrac.prototype.getDetails = function() {
@@ -62,15 +62,22 @@ OnTrac.prototype.getDetailsRequestSuccess = function(response) {
 	if(status > 0) {
 		var details = [];
 		var details2 = responseText.split("<td bgcolor=#ffffff nowrap><p>");
-		for (var i=1; i<details2.length; i+=3) {
-			var tmpDate = details2[i+1].split("<br />")[0];
-			var tmpLoc = details2[i+2].split("<br />")[0];
-			var tmpNotes = details2[i].split("<br />")[0];
-			
+		if (details2.length == 1)
+			details2 = responseText.split("<td bgcolor=#ffffff nowrap <p>");
+		for (var i=1; i<details2.length; i+=4) {
+			var tmpDate = details2[i+1].split("</td>")[0].trim();
+			var tmpLoc = details2[i+2].split("</td>")[0].trim();
+			var tmpNotes = details2[i].split("</td>")[0].trim();
+			var tmpDoorTag = details2[i+3].split("</td>")[0].trim();
+
+			if (tmpDoorTag != "") {
+				tmpNotes = tmpNotes + "Door Tag: " + tmpDoorTag;
+			}
+
 			details.push({date: tmpDate, location: tmpLoc, notes: tmpNotes});
 		}
 		
-		this.callbackDetails(details.clone());	
+		this.callbackDetails(details.clone());
 	}
 };
 

@@ -13,10 +13,11 @@ Speedpost.prototype.getColor = function() {
 	return "#84a2c0";
 }
 
-Speedpost.prototype.init = function(id, callbackStatus, callbackDetails, callbackError) {
+Speedpost.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
 	this.id = id;
 	this.callbackStatus = callbackStatus;
 	this.callbackDetails = callbackDetails;
+	this.callbackMetadata = callbackMetadata;
 	this.callbackError = callbackError;
 };
 

@@ -13,10 +13,11 @@ TNT.prototype.getColor = function() {
 	return "#f1a571";
 }
 
-TNT.prototype.init = function(id, callbackStatus, callbackDetails, callbackError) {
+TNT.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
 	this.id = id;
 	this.callbackStatus = callbackStatus;
 	this.callbackDetails = callbackDetails;
+	this.callbackMetadata = callbackMetadata;
 	this.callbackError = callbackError;
 };
 

@@ -13,10 +13,11 @@ DHLGM.prototype.getColor = function() {
 	return "#f1d871";
 }
 
-DHLGM.prototype.init = function(id, callbackStatus, callbackDetails, callbackError) {
+DHLGM.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
 	this.id = id;
 	this.callbackStatus = callbackStatus;
 	this.callbackDetails = callbackDetails;
+	this.callbackMetadata = callbackMetadata;
 	this.callbackError = callbackError;
 };
 

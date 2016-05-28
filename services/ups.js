@@ -13,10 +13,11 @@ UPS.prototype.getColor = function() {
 	return "#8b7271";
 }
 
-UPS.prototype.init = function(id, callbackStatus, callbackDetails, callbackError) {
+UPS.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
 	this.id = id;
 	this.callbackStatus = callbackStatus;
 	this.callbackDetails = callbackDetails;
+	this.callbackMetadata = callbackMetadata;
 	this.callbackError = callbackError;
 };
 

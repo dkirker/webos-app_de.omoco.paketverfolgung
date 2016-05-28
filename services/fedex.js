@@ -13,10 +13,11 @@ FedEx.prototype.getColor = function() {
 	return "#a472bd";
 }
 
-FedEx.prototype.init = function(id, callbackStatus, callbackDetails, callbackError) {
+FedEx.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
 	this.id = id;
 	this.callbackStatus = callbackStatus;
 	this.callbackDetails = callbackDetails;
+	this.callbackMetadata = callbackMetadata;
 	this.callbackError = callbackError;
 };
 
@@ -91,9 +92,9 @@ FedEx.prototype.getDetailsRequestSuccess = function(response) {
 		status = 2;
 	} else if (keyStatus.indexOf("On schedule") != -1 || keyStatus.indexOf("In transit") != -1) {
 		status = 3;
-	} else if (keyStatus.indexOf("Delivery") != -1 || keyStatus.indexOf("Exception") != -1) { // Exceptions can happen anywhere, and this shouldn't be indicitive of "out for delivery"
+	} else if (keyStatus.indexOf("delivery") != -1 || keyStatus.indexOf("Delivery") != -1 || keyStatus.indexOf("Exception") != -1) { // Exceptions can happen anywhere, and this shouldn't be indicitive of "out for delivery"
 		status = 4;
-	} else if (keyStatus.indexOf("Delivered") != -1) {
+	} else if (keyStatus.indexOf("delivered") != -1 || keyStatus.indexOf("Delivered") != -1) {
 		status = 5;
 	}
 
@@ -106,6 +107,9 @@ FedEx.prototype.getDetailsRequestSuccess = function(response) {
 			var tmpDate = detailsVar[i].date + " " + detailsVar[i].time + " " + detailsVar[i].gmtOffset;
 			Mojo.Log.info("date: ", tmpDate, " location: ", detailsVar[i].scanLocation, " notes: ", detailsVar[i].status);
 			details.push({date: tmpDate, location: detailsVar[i].scanLocation, notes: detailsVar[i].status});
+			if (detailsVar[i].status.indexOf("delivery") != -1 || detailsVar[i].status.indexOf("Delivery") != -1) {
+				this.callbackStatus(4); // Hack for "Out for delivery"
+			}
 		}
 		
 		this.callbackDetails(details.clone());	

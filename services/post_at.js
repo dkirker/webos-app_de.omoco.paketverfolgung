@@ -13,10 +13,11 @@ PostAT.prototype.getColor = function() {
 	return "#ede471";
 }
 
-PostAT.prototype.init = function(id, callbackStatus, callbackDetails, callbackError) {
+PostAT.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
 	this.id = id;
 	this.callbackStatus = callbackStatus;
 	this.callbackDetails = callbackDetails;
+	this.callbackMetadata = callbackMetadata;
 	this.callbackError = callbackError;
 };
 

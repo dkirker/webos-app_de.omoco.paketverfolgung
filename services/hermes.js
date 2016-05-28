@@ -13,10 +13,11 @@ Hermes.prototype.getColor = function() {
 	return "#72bed9";
 }
 
-Hermes.prototype.init = function(id, callbackStatus, callbackDetails, callbackError) {
+Hermes.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
 	this.id = id;
 	this.callbackStatus = callbackStatus;
 	this.callbackDetails = callbackDetails;
+	this.callbackMetadata = callbackMetadata;
 	this.callbackError = callbackError;
 };
 

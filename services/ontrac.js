@@ -13,10 +13,11 @@ OnTrac.prototype.getColor = function() {
 	return "#f1db73";
 }
 
-OnTrac.prototype.init = function(id, callbackStatus, callbackDetails, callbackError) {
+OnTrac.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
 	this.id = id;
 	this.callbackStatus = callbackStatus;
 	this.callbackDetails = callbackDetails;
+	this.callbackMetadata = callbackMetadata;
 	this.callbackError = callbackError;
 };
 

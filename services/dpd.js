@@ -13,10 +13,11 @@ DPD.prototype.getColor = function() {
 	return "#e37286";
 }
 
-DPD.prototype.init = function(id, callbackStatus, callbackDetails, callbackError) {
+DPD.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
 	this.id = id;
 	this.callbackStatus = callbackStatus;
 	this.callbackDetails = callbackDetails;
+	this.callbackMetadata = callbackMetadata;
 	this.callbackError = callbackError;
 };
 

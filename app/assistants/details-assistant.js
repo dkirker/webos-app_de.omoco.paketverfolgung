@@ -37,6 +37,11 @@ DetailsAssistant.prototype.setup = function() {
 					disabled: false
 				},
 				{
+					label: $L("Mark Package Delivered"),
+					command: "mark-delivered",
+					disabled: false
+				},
+				{
 					label: $L("Delete Package"),
 					command: "delete",
 					shortcut: "d",
@@ -154,11 +159,17 @@ DetailsAssistant.prototype.loadData = function() {
 	
 	this.controller.get('parcelname').innerText = $L("Tracking ID: ") + PARCELS[this.id].parcelid;
 	
-	this.controller.get('info').innerHTML = "<table border=0 cellpadding=0 cellspacing=0><tr><td width=75 valign=top><b>Name:</b></td><td>" + PARCELS[this.id].name + "</td></tr>" + 
+	var detailsHtml = "<table border=0 cellpadding=0 cellspacing=0><tr><td width=75 valign=top><b>Name:</b></td><td>" + PARCELS[this.id].name + "</td></tr>" + 
 		$L("<tr><td><b>Service:</b></td><td>") + PARCELS[this.id].servicename + "</td></tr>" +
 		$L("<tr><td><b>Created:</b></td><td>") + PARCELS[this.id].timecreatedstring + "</td></tr>" +
-		$L("<tr><td><b>Update:</b></td><td>") + PARCELS[this.id].lastmodifiedstring + "</td></tr></table>";
-	
+		$L("<tr><td><b>Update:</b></td><td>") + PARCELS[this.id].lastmodifiedstring + "</td></tr>";
+	if (PARCELS[this.id].deliverydate) {
+		detailsHtml += $L("<tr><td colspan=2><b>Expected Delivery:</b></td></tr><tr><td colspan=2>") + PARCELS[this.id].deliverydate + "</td></tr>";
+	}
+	detailsHtml	+= "</table>";
+
+	this.controller.get('info').innerHTML = detailsHtml;
+
 	this.lastMapLocation = "";
 	this.lastMapLocations = [];
 	this.controller.get('map').name = "zoom0";
@@ -206,7 +217,7 @@ DetailsAssistant.prototype.loadData = function() {
 			}
 		}
 		
-		service.init(PARCELS[this.id].parcelid, null, null, null);
+		service.init(PARCELS[this.id].parcelid, null, null, null, null);
 		this.trackingUrl = service.getTrackingUrl();
 		if(COLORDETAILS)
 			this.controller.document.body.style.backgroundColor = service.getColor();
@@ -234,7 +245,7 @@ DetailsAssistant.prototype.loadData = function() {
 			}
 		}
 		
-		service.init(PARCELS[this.id].parcelid, this.callbackStatus.bind(this), this.refreshDetails.bind(this), this.refreshError.bind(this));
+		service.init(PARCELS[this.id].parcelid, this.callbackStatus.bind(this), this.refreshDetails.bind(this), this.callbackMetadata.bind(this), this.refreshError.bind(this));
 		this.trackingUrl = service.getTrackingUrl();
 		if(COLORDETAILS)
 			this.controller.document.body.style.backgroundColor = service.getColor();
@@ -425,6 +436,20 @@ DetailsAssistant.prototype.callbackStatus = function(status) {
 	this.controller.get('history').innerHTML = history;
 };
 
+DetailsAssistant.prototype.callbackMetadata = function(data) {
+    var dataupdated = false;
+
+    if (data.delivery) {
+        PARCELS[this.id].deliverydate = data.delivery;
+        dataupdated = true;
+    }
+
+    if (dataupdated) {
+        this.parcelsDepot.add("parcels", PARCELS, this.dbSuccess, this.dbFailure);
+		// TODO: What if the estimated delivery date updates but details below don't? How do we handle the data update effectively/safely?
+    }
+};
+
 DetailsAssistant.prototype.refreshDetails = function(details) {
 	detailsListModel.items = details;
 	this.controller.modelChanged(detailsListModel);
@@ -470,10 +495,16 @@ DetailsAssistant.prototype.notify = function() {
 	PARCELS[this.id].lastmodifiedstring = dateNowString;
 	this.parcelsDepot.add("parcels", PARCELS, this.dbSuccess, this.dbFailure);
 
-	this.controller.get('info').innerHTML = "<table border=0 cellpadding=0 cellspacing=0><tr><td width=75 valign=top><b>Name:</b></td><td>" + PARCELS[this.id].name + "</td></tr>" + 
-		$L("<tr><td><b>Service:</b></td><td>") + PARCELS[this.id].servicename + "</td></tr>" +
-		$L("<tr><td><b>Created:</b></td><td>") + PARCELS[this.id].timecreatedstring + "</td></tr>" +
-		$L("<tr><td><b>Update:</b></td><td>") + PARCELS[this.id].lastmodifiedstring + "</td></tr></table>";
+    var detailsHtml = "<table border=0 cellpadding=0 cellspacing=0><tr><td width=75 valign=top><b>Name:</b></td><td>" + PARCELS[this.id].name + "</td></tr>" +
+        $L("<tr><td><b>Service:</b></td><td>") + PARCELS[this.id].servicename + "</td></tr>" +
+        $L("<tr><td><b>Created:</b></td><td>") + PARCELS[this.id].timecreatedstring + "</td></tr>" +
+        $L("<tr><td><b>Update:</b></td><td>") + PARCELS[this.id].lastmodifiedstring + "</td></tr>";
+    if (PARCELS[this.id].deliverydate) {
+		detailsHtml += $L("<tr><td colspan=2><b>Expected Delivery:</b></td></tr><tr><td colspan=2>") + PARCELS[this.id].deliverydate + "</td></tr>";
+	}
+    detailsHtml += "</table>";
+
+    this.controller.get('info').innerHTML = detailsHtml;
 	
 	// notify user only once per parcel!
 	if(NOTIFYSMALLMESSAGE) {
@@ -553,6 +584,12 @@ DetailsAssistant.prototype.itemEdit = function() {
 	});
 }
 
+DetailsAssistant.prototype.markDelivered = function() {
+	PARCELS[this.id].status = 5;
+    this.parcelsDepot.add("parcels", PARCELS, this.dbSuccess, this.dbFailure);
+	this.loadData();
+}
+
 DetailsAssistant.prototype.activate = function(event) {
 };
 
@@ -599,6 +636,9 @@ DetailsAssistant.prototype.handleCommand = function(event) {
 			case 'forward':
 				this.id++;
 				this.loadData();
+				break;
+			case 'mark-delivered':
+				this.markDelivered();
 				break;
 		}
 	}

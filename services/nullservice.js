@@ -5,10 +5,11 @@ NullService.prototype.getColor = function() {
 	return "";
 }
 
-NullService.prototype.init = function(id, callbackStatus, callbackDetails, callbackError) {
+NullService.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
 	this.id = id;
 	this.callbackStatus = callbackStatus;
 	this.callbackDetails = callbackDetails;
+	this.callbackMetadata = callbackMetadata;
 	this.callbackError = callbackError;
 };
 

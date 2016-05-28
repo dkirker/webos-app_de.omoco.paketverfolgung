@@ -13,10 +13,11 @@ TestService.prototype.getColor = function() {
 	return "#f1f1f0";
 }
 
-TestService.prototype.init = function(id, callbackStatus, callbackDetails, callbackError) {
+TestService.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
 	this.id = id;
 	this.callbackStatus = callbackStatus;
 	this.callbackDetails = callbackDetails;
+	this.callbackMetadata = callbackMetadata;
 	this.callbackError = callbackError;
 };
 

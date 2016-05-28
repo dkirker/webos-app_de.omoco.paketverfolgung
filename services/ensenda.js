@@ -13,10 +13,11 @@ Ensenda.prototype.getColor = function() {
 	return "#edb380";
 }
 
-Ensenda.prototype.init = function(id, callbackStatus, callbackDetails, callbackError) {
+Ensenda.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
 	this.id = id;
 	this.callbackStatus = callbackStatus;
 	this.callbackDetails = callbackDetails;
+	this.callbackMetadata = callbackMetadata;
 	this.callbackError = callbackError;
 };
 

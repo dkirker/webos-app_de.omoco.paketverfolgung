@@ -13,10 +13,11 @@ Itella.prototype.getColor = function() {
 	return "#72a5ca";
 }
 
-Itella.prototype.init = function(id, callbackStatus, callbackDetails, callbackError) {
+Itella.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
 	this.id = id;
 	this.callbackStatus = callbackStatus;
 	this.callbackDetails = callbackDetails;
+	this.callbackMetadata = callbackMetadata;
 	this.callbackError = callbackError;
 };
 

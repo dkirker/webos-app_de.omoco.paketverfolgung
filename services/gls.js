@@ -13,10 +13,11 @@ GLS.prototype.getColor = function() {
 	return "#7872a6";
 }
 
-GLS.prototype.init = function(id, callbackStatus, callbackDetails, callbackError) {
+GLS.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
 	this.id = id;
 	this.callbackStatus = callbackStatus;
 	this.callbackDetails = callbackDetails;
+	this.callbackMetadata = callbackMetadata;
 	this.callbackError = callbackError;
 };
 

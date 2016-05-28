@@ -13,10 +13,11 @@ PostCH.prototype.getColor = function() {
 	return "#f1d871";
 }
 
-PostCH.prototype.init = function(id, callbackStatus, callbackDetails, callbackError) {
+PostCH.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
 	this.id = id;
 	this.callbackStatus = callbackStatus;
 	this.callbackDetails = callbackDetails;
+	this.callbackMetadata = callbackMetadata;
 	this.callbackError = callbackError;
 };
 

@@ -13,10 +13,11 @@ Test2Service.prototype.getColor = function() {
 	return "#72f171";
 }
 
-Test2Service.prototype.init = function(id, callbackStatus, callbackDetails, callbackError) {
+Test2Service.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
 	this.id = id;
 	this.callbackStatus = callbackStatus;
 	this.callbackDetails = callbackDetails;
+	this.callbackMetadata = callbackMetadata;
 	this.callbackError = callbackError;
 };
 

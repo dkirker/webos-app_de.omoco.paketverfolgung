@@ -35,7 +35,8 @@ Parcel.prototype.refresh = function() {
 			service = Object.clone(SERVICES[i].serviceobject);
 		}
 	}
-	service.init(PARCELS[this.id].parcelid, this.callbackStatus.bind(this), this.refreshDetails.bind(this), this.refreshError.bind(this));
+	service.init(PARCELS[this.id].parcelid, this.callbackStatus.bind(this), this.refreshDetails.bind(this),
+				 this.callbackMetadata.bind(this), this.refreshError.bind(this));
 	service.getDetails();
 };
 
@@ -63,6 +64,31 @@ Parcel.prototype.callbackStatus = function(status) {
 	}
 	
 	this.callback();
+};
+
+Parcel.prototype.callbackMetadata = function(data) {
+    var nothingfound = true;
+	var dataupdated = false;
+    for(var i=0; i<PARCELS.length; i++) {
+        if(PARCELS[i].parcelid == this.parcelid) {
+            this.id = i;
+            nothingfound = false;
+            break;
+        }
+    }
+    if(nothingfound) {
+        Mojo.Log.warn("Package seems to be deleted during refresh.");
+        return;
+    }
+
+	if (data.delivery) {
+		PARCELS[this.id].deliverydate = data.delivery;
+		dataupdated = true;
+	}
+
+	if (dataupdated) {
+		this.parcelsDepot.add("parcels", PARCELS, this.dbSuccess, this.dbFailure);
+	}
 };
 
 Parcel.prototype.refreshDetails = function(details) {

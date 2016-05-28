@@ -2,21 +2,22 @@ function DHL() {
 }
 
 DHL.prototype.getAuthor = function() {
-	return "Sebastian Hammerl";
+	return "Donald Kirker, Sebastian Hammerl";
 }
 
 DHL.prototype.getVersion = function() {
-	return "1.0";
+	return "2.0";
 }
 
 DHL.prototype.getColor = function() {
 	return "#f1d871";
 }
 
-DHL.prototype.init = function(id, callbackStatus, callbackDetails, callbackError) {
+DHL.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
 	this.id = id;
 	this.callbackStatus = callbackStatus;
 	this.callbackDetails = callbackDetails;
+	this.callbackMetadata = callbackMetadata;
 	this.callbackError = callbackError;
 };
 
@@ -36,23 +37,24 @@ DHL.prototype.getDetails = function() {
 
 DHL.prototype.getDetailsRequestSuccess = function(response) {
 	var responseText = response.responseText;
-	
+Mojo.Log.info("Response: ", responseText);	
 	var status = 0;
-	if(responseText.split("progress progress-landscape-20").length > 1) {
+	if(responseText.split("img/Icons/Icon_1_ACTIVE.gif").length > 1) {
 		status = 1;
 	}
-	if(responseText.split("progress progress-landscape-40").length > 1) {
+	if(responseText.split("img/Icons/Icon_2_ACTIVE.gif").length > 1) {
 		status = 2;
 	}
-	if(responseText.split("progress progress-landscape-60").length > 1) {
+	if(responseText.split("img/Icons/Icon_3_ACTIVE.gif").length > 1) {
 		status = 3;
 	}
-	if(responseText.split("progress progress-landscape-80").length > 1) {
+	if(responseText.split("img/Icons/Icon_4_ACTIVE.gif").length > 1) {
 		status = 4;
 	}
-	if(responseText.split("progress progress-landscape-100").length > 1) {
+	if(responseText.split("img/Icons/Icon_5_ACTIVE.gif").length > 1) {
 		status = 5;
 	}
+	// TODO: Verify this
 	if(responseText.split("ungültig").length > 1) {
 		status = -1;
 	}
@@ -61,13 +63,17 @@ DHL.prototype.getDetailsRequestSuccess = function(response) {
 
 	if(status > 0) {
 		var details = [];
-		var details2 = 	responseText.split("<table class=\"sub-list-item\" cellpadding=\"0\" cellspacing=\"0\"><tr>")[1];
-		details2 = details2.split("<div class=\"list-item\">");
+		var details2 = 	responseText.split("<div id=\"detailEventsBody\">")[1];
+		details2 = details2.split("<div class=\"event\">");
 		for (var i=1; i<details2.length; i++) {
-			var tmpDate = details2[i].split(" Uhr<br>")[0];
+			var tmpDate = details2[i].split(" Uhr")[0];
 			var tmpNotes = "";
 			var tmpLoc = "";
-			if(details2[i].split(")").length > 1) {
+			tmpLoc = details2[i].split("<span>")[2];
+			tmpLoc = tmpLoc.split("</span>")[0];
+			tmpNotes = details2[i].split("eventText\" style=\"word-wrap: break-word;\">")[1];
+			tmpNotes = tmpNotes.split("</span>")[0];
+			/*if(details2[i].split(")").length > 1) {
 				tmpNotes = details2[i].split("<br>")[1];
 				tmpNotes = tmpNotes.split("(")[0];
 				tmpLoc = details2[i].split("(")[1];
@@ -75,7 +81,7 @@ DHL.prototype.getDetailsRequestSuccess = function(response) {
 			} else {
 				tmpNotes = details2[i].split("<br>")[1];
 				tmpNotes = tmpNotes.split("<")[0];
-			}
+			}*/
 
 			details.push({date: tmpDate, location: tmpLoc, notes: tmpNotes});
 		}

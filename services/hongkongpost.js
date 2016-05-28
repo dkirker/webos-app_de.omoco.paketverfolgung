@@ -13,10 +13,11 @@ HKPost.prototype.getColor = function() {
 	return "#72c0bb";
 }
 
-HKPost.prototype.init = function(id, callbackStatus, callbackDetails, callbackError) {
+HKPost.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
 	this.id = id;
 	this.callbackStatus = callbackStatus;
 	this.callbackDetails = callbackDetails;
+	this.callbackMetadata = callbackMetadata;
 	this.callbackError = callbackError;
 };
 

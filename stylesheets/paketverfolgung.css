@@ -1,9 +1,11 @@
 .palm-page-header .header-icon.custom {
 	background: url(../images/header-icon.png) no-repeat;
+	margin: auto;
 }
 
 .dashboard-task-icon {
 	background: url(../images/dashboard-icon.png) center left no-repeat;
+	margin: auto;
 }
 
 .explanation-text {                                                                 

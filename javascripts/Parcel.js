@@ -85,6 +85,10 @@ Parcel.prototype.callbackMetadata = function(data) {
 		PARCELS[this.id].deliverydate = data.delivery;
 		dataupdated = true;
 	}
+	if (data.serviceclass) {
+		PARCELS[this.id].serviceclass = data.serviceclass;
+		dataupdated = true;
+	}
 
 	if (dataupdated) {
 		this.parcelsDepot.add("parcels", PARCELS, this.dbSuccess, this.dbFailure);

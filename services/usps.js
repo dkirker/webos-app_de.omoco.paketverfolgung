@@ -101,7 +101,8 @@ USPS.prototype.getDetailsRequestSuccess = function(response) {
 	// Expected Delivery Day:</h3>
 	// Updated Delivery Day:</h3>
 	// <span class="value">DATE_STR</span>
-	var deliveryFrag = responseText.split(" Delivery Day:</h3>")
+	var metadata = {};
+	var deliveryFrag = responseText.split(" Delivery Day:</h3>");
 	if (deliveryFrag.length > 1) {
 		var deliveryStr = deliveryFrag[1].split("<span class=\"value\">")[1];
 		var spanidx = 0;
@@ -110,7 +111,17 @@ USPS.prototype.getDetailsRequestSuccess = function(response) {
 		}
 		deliveryStr = deliveryStr.split("</span>")[spanidx].trim();
 //Mojo.Log.info("deliveryStr: " + deliveryStr);
-		this.callbackMetadata({delivery: deliveryStr});
+		metadata.delivery = deliveryStr;
+	}
+
+	var utagFrag = responseText.split("<script type=\"text/javascript\" id=\"tealiumUtagData\">")
+	if (utagFrag.length > 1) {
+		var serviceStr = utagFrag[1].split("{\"section\":\"track\",\"name\":\"m.trackconfirm.detail\",\"product\":\"")[1].split("\"}")[0];
+		metadata.serviceclass = serviceStr.replace(/<(\/|\\)*SUP>/g,"");
+	}
+
+	if (metadata!= {}) {
+		this.callbackMetadata(metadata);
 	}
 
 

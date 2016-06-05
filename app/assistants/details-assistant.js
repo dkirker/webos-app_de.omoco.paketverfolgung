@@ -163,6 +163,9 @@ DetailsAssistant.prototype.loadData = function() {
 		$L("<tr><td><b>Service:</b></td><td>") + PARCELS[this.id].servicename + "</td></tr>" +
 		$L("<tr><td><b>Created:</b></td><td>") + PARCELS[this.id].timecreatedstring + "</td></tr>" +
 		$L("<tr><td><b>Update:</b></td><td>") + PARCELS[this.id].lastmodifiedstring + "</td></tr>";
+	if (PARCELS[this.id].serviceclass) {
+		detailsHtml += $L("<tr><td colspan=2><b>Service Class:</b></td></tr><tr><td colspan=2>") + PARCELS[this.id].serviceclass + "</td></tr>";
+	}
 	if (PARCELS[this.id].deliverydate) {
 		detailsHtml += $L("<tr><td colspan=2><b>Expected Delivery:</b></td></tr><tr><td colspan=2>") + PARCELS[this.id].deliverydate + "</td></tr>";
 	}
@@ -443,6 +446,10 @@ DetailsAssistant.prototype.callbackMetadata = function(data) {
         PARCELS[this.id].deliverydate = data.delivery;
         dataupdated = true;
     }
+    if (data.serviceclass) {
+        PARCELS[this.id].serviceclass = data.serviceclass;
+        dataupdated = true;
+    }
 
     if (dataupdated) {
         this.parcelsDepot.add("parcels", PARCELS, this.dbSuccess, this.dbFailure);
@@ -499,7 +506,10 @@ DetailsAssistant.prototype.notify = function() {
         $L("<tr><td><b>Service:</b></td><td>") + PARCELS[this.id].servicename + "</td></tr>" +
         $L("<tr><td><b>Created:</b></td><td>") + PARCELS[this.id].timecreatedstring + "</td></tr>" +
         $L("<tr><td><b>Update:</b></td><td>") + PARCELS[this.id].lastmodifiedstring + "</td></tr>";
-    if (PARCELS[this.id].deliverydate) {
+	if (PARCELS[this.id].serviceclass) {
+		detailsHtml += $L("<tr><td colspan=2><b>Service Class:</b></td></tr><tr><td colspan=2>") + PARCELS[this.id].serviceclass + "</td></tr>";
+	}
+	if (PARCELS[this.id].deliverydate) {
 		detailsHtml += $L("<tr><td colspan=2><b>Expected Delivery:</b></td></tr><tr><td colspan=2>") + PARCELS[this.id].deliverydate + "</td></tr>";
 	}
     detailsHtml += "</table>";

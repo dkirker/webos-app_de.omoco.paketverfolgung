@@ -86,6 +86,9 @@ UPS.prototype.getDetailsRequestSuccessMobile = function(response) {
        statusText.split("Arrival Scan").length > 1) {
         status = 3;
     }
+	if(statusText.split("In Transit").length > 1) {
+		status = 3;
+	}
     if(statusText.split("WIRD ZUGESTELLT").length > 1 || statusText.split("Wird zugestellt").length > 1 ||
        statusText.split("Out For Delivery").length > 1) {
         status = 4;
@@ -99,6 +102,31 @@ UPS.prototype.getDetailsRequestSuccessMobile = function(response) {
     }
 
     this.callbackStatus(status);
+
+	var metadata = {};
+	var deliveryFrag = responseText.split("Delivery Date:</dt>");
+	if (deliveryFrag.length > 1) {
+		var deliveryStr = deliveryFrag[1].split("<dd>")[1].split("</dd>")[0].trim();
+
+		if (deliveryStr.split("Information unavailable").length > 1) {
+			metadata.delivery = $L("Unknown");
+		} else {
+			metadata.delivery = deliveryStr;
+		}
+	}
+
+	var serviceFrag = responseText.split("<dt>Service Level:</dt>");
+	if (serviceFrag.length > 1) {
+		var serviceStr = serviceFrag[1].split("<dd>")[1].split("</dd>")[0].trim();
+
+		if (serviceStr) {
+            metadata.serviceclass = serviceStr;
+        }
+	}
+
+	if (metadata != {}) {
+		this.callbackMetadata(metadata);
+	}
 
     if(status > 0) {
         var details = [];

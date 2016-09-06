@@ -116,11 +116,14 @@ USPS.prototype.getDetailsRequestSuccess = function(response) {
 
 	var utagFrag = responseText.split("<script type=\"text/javascript\" id=\"tealiumUtagData\">")
 	if (utagFrag.length > 1) {
-		var serviceStr = utagFrag[1].split("{\"section\":\"track\",\"name\":\"m.trackconfirm.detail\",\"product\":\"")[1].split("\"}")[0];
-		metadata.serviceclass = serviceStr.replace(/<(\/|\\)*SUP>/g,"");
+		var serviceFrag = utagFrag[1].split("{\"section\":\"track\",\"name\":\"m.trackconfirm.detail\",\"product\":\"")[1].split("\"}")[0];
+		var serviceStr = serviceFrag.replace(/<(\/|\\)*SUP>/g,"");
+		if (serviceStr !== "null") {
+			metadata.serviceclass = serviceStr;
+		}
 	}
 
-	if (metadata!= {}) {
+	if (metadata != {}) {
 		this.callbackMetadata(metadata);
 	}
 

@@ -99,7 +99,21 @@ FedEx.prototype.getDetailsRequestSuccess = function(response) {
 	}
 
 	this.callbackStatus(status);
-	
+
+	var metadata = {};
+	if (json.TrackPackagesResponse.packageList[0].displayEstDeliveryDateTime &&
+		json.TrackPackagesResponse.packageList[0].displayEstDeliveryDateTime != "") {
+		metadata.delivery = json.TrackPackagesResponse.packageList[0].displayEstDeliveryDateTime;
+	}
+	if (json.TrackPackagesResponse.packageList[0].trackingCarrierDesc &&
+		json.TrackPackagesResponse.packageList[0].trackingCarrierDesc != "") {
+		metadata.serviceclass = json.TrackPackagesResponse.packageList[0].trackingCarrierDesc;
+	}
+
+	if (metadata != {}) {
+		this.callbackMetadata(metadata);
+	}
+
 	if (status > 0) {
 		var detailsVar = json.TrackPackagesResponse.packageList[0].scanEventList;
 		var details = [];

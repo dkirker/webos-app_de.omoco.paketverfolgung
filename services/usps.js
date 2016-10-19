@@ -40,7 +40,7 @@ USPS.prototype.getDetailsRequestSuccess = function(response) {
 	var responseText = response.responseText;
 //Mojo.Log.info("responseText: " +responseText);
 	//var responseText2 = responseText.split("<tbody class=\"details\">")[1];
-	var statusFrag = responseText.split("<div class=\"package-note \">");//[1].split("</div>")[0];
+	var statusFrag = responseText.split("<div class=\"package-note");//[1].split("</div>")[0];
 	var statusText = "";
 //Mojo.Log.info("statusFrag: " + statusFrag);
 	if (statusFrag.length > 1) {
@@ -65,6 +65,7 @@ USPS.prototype.getDetailsRequestSuccess = function(response) {
 	// in-transit: 3 (arrived at post office, departed post office, arrived at usps origin facility ?, arrived at usps facility, departed usps facility, processed through facility, sorting complete)
 	// in-transit + special: 4 (out for delivery)
 	// delivered: 5
+	// alert: 3 (for now)
 	// error: 0
 	// seized: 0
 	// archived: 0
@@ -82,7 +83,8 @@ USPS.prototype.getDetailsRequestSuccess = function(response) {
 			   statusText.toLowerCase().indexOf("out-for-delivery") != -1) {
 		status = 4;
 	} else if (statusText.toLowerCase().indexOf("in transit") != -1 ||
-			   statusText.toLowerCase().indexOf("in-transit") != -1) {
+			   statusText.toLowerCase().indexOf("in-transit") != -1 ||
+			   statusText.toLowerCase().indexOf("alert") != -1) {
         status = 3;
     } else if (statusText.toLowerCase().indexOf("delivered") != -1) {
 		status = 5;

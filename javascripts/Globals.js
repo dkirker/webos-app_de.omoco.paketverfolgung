@@ -1,6 +1,7 @@
 LANG = "en";
 
 DEFAULTSERVICESSRC = [
+	{name: "Amazon",			src: "services/amazon.js",			active: true,	 beta: true},
 	{name: "DHL",               src: "services/dhl.js",             active: true,    beta: false},
 	{name: "DHL Expr. Intl.",   src: "services/dhl_expr_intl.js",   active: true,    beta: false},
 	{name: "DHL Global Mail",   src: "services/dhl_global_mail.js", active: true,    beta: true},

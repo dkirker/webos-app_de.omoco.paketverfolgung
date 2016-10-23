@@ -6,7 +6,7 @@ USPS.prototype.getAuthor = function() {
 }
 
 USPS.prototype.getVersion = function() {
-	return "1.1";
+	return "1.1.1";
 }
 
 USPS.prototype.getColor = function() {
@@ -118,10 +118,21 @@ USPS.prototype.getDetailsRequestSuccess = function(response) {
 
 	var utagFrag = responseText.split("<script type=\"text/javascript\" id=\"tealiumUtagData\">")
 	if (utagFrag.length > 1) {
-		var serviceFrag = utagFrag[1].split("{\"section\":\"track\",\"name\":\"m.trackconfirm.detail\",\"product\":\"")[1].split("\"}")[0];
-		var serviceStr = serviceFrag.replace(/<(\/|\\)*SUP>/g,"");
-		if (serviceStr !== "null") {
+		var serviceStr = null;
+		/*var serviceFrag = utagFrag[1].split("{\"section\":\"track\",\"name\":\"m.trackconfirm.detail\",\"product\":\"")[1].split("\"}")[0];
+		var serviceStr = serviceFrag.replace(/<(\/|\\)*SUP>/g,"");*/
+		utagFrag = utagFrag[1].split("</script>")[0].trim();
+		if (utagFrag.indexOf("utag_data = ") != -1) {
+			utagFrag = utagFrag.split("utag_data = ")[1];
+			var utagData = JSON.parse(utagFrag);
+
+			if (utagData.product)
+				serviceStr = utagData.product.replace(/<(\/|\\)*SUP>/g,"");
+		}
+
+		if (serviceStr != null && serviceStr !== "null") {
 			metadata.serviceclass = serviceStr;
+//Mojo.Log.info("serviceStr: " + serviceStr);
 		}
 	}
 

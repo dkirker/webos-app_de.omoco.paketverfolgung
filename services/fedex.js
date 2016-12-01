@@ -82,11 +82,12 @@ FedEx.prototype.getDetailsRequestSuccess = function(response) {
 	var status = 0;
 
 	Mojo.Log.info("errorCode: ", errorCode, "keyStatus: ", keyStatus);
+	//Mojo.Log.info("JSON: ", response.responseText);
 
 	// TODO: I am only certain on "errorCode" and "keyStatus" == "In transit"
 	if (errorCode != 0) {
 		status = -1;
-	} else if (keyStatus.indexOf("Initiated") != -1) {
+	} else if (keyStatus.indexOf("Initiated") != -1 || keyStatus.indexOf("Label created") != -1) {
 		status = 1;
 	} else if (keyStatus.indexOf("Picked") != -1) {
 		status = 2;

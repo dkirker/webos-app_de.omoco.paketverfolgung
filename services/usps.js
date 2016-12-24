@@ -75,7 +75,8 @@ USPS.prototype.getDetailsRequestSuccess = function(response) {
 
 	var status = 0;
 	if (statusText.toLowerCase().indexOf("pre shipment") != -1 ||
-		statusText.toLowerCase().indexOf("pre-shipment") != -1) {
+		statusText.toLowerCase().indexOf("pre-shipment") != -1 ||
+		statusText.toLowerCase().indexOf("on its way to usps") != -1) {
 		status = 1;
 	} else if (statusText.toLowerCase().indexOf("accepted") != -1) {
 		status = 2;
@@ -143,7 +144,8 @@ USPS.prototype.getDetailsRequestSuccess = function(response) {
 
 	var details = [];
 	if (status > 0) {
-		var detailsText = responseText.split("<div class=\"package-note ui-border-dotted-bottom\">");
+		var scanHistory = responseText.split("<div class=\"scan-history")[1];
+		var detailsText = scanHistory.split("<div class=\"package-note ui-border-dotted-bottom\">");
 		for (var i = 1; i < detailsText.length; i++) {
 //Mojo.Log.info("detailsText[" + i + "]: " + detailsText[i]);
 			var tmpDateStr = detailsText[i].split("<h3>")[1].split("<br />")[0].replace(/[\r]/g, " ").replace(/[^,: a-zA-Z0-9]/g, "").trim() + " " +

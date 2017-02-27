@@ -2,11 +2,11 @@ function UPS() {
 }
 
 UPS.prototype.getAuthor = function() {
-	return "Sebastian Hammerl";
+	return "Sebastian Hammerl, Donald Kirker";
 }
 
 UPS.prototype.getVersion = function() {
-	return "1.0";
+	return "1.3";
 }
 
 UPS.prototype.getColor = function() {
@@ -68,64 +68,77 @@ UPS.prototype.getDetailsRequestSuccess = function(response) {
 };
 
 UPS.prototype.getDetailsRequestSuccessMobile = function(response) {
-    var responseText = this._unescapeHTML(response.responseText);
+	var responseText = this._unescapeHTML(response.responseText);
 	//var expectedDelivery = responseText.split("Scheduled Delivery Date:")[1].split("<dd>")[1].split("</dd>")[0];
 
-    var statusText = responseText.split("Package Progress")[1];
-    var status = 0;
-    if(statusText.split("HERKUNFTSSCAN").length > 1 || statusText.split("Herkunfts Scan").length > 1 ||
-       statusText.split("Auftrag verarbeitet").length > 1 || statusText.split("Origin Scan").length > 1 ||
-       statusText.split("Order Processed").length > 1) {
-        status = 1;
-    }
-    if(statusText.split("ABFAHRTSSCAN").length > 1 || statusText.split("Abfahrts Scan").length > 1 ||
-       statusText.split("Departure Scan").length > 1) {
-        status = 2;
-    }
-    if(statusText.split("ANKUNFTSSCAN").length > 1 || statusText.split("Ankunfts Scan").length > 1 ||
-       statusText.split("Arrival Scan").length > 1) {
-        status = 3;
-    }
-	if(statusText.split("In Transit").length > 1) {
-		status = 3;
-	}
-    if(statusText.split("WIRD ZUGESTELLT").length > 1 || statusText.split("Wird zugestellt").length > 1 ||
-       statusText.split("Out For Delivery").length > 1) {
-        status = 4;
-    }
-    if(statusText.split("UPS hat die Sendung zugestellt").length > 1 || statusText.split("UPS has delivered the shipment").length > 1 ||
-	   statusText.split("Delivered").length > 1 || statusText.split("Package picked up at UPS Access Point").length > 1) {
-        status = 5;
-    }
-    if(statusText.split("1Z9999999999999999").length > 1) {
-        status = -1;
-    }
-
-    this.callbackStatus(status);
-
-	var metadata = {};
-	var deliveryFrag = responseText.split("Delivery Date:</dt>");
-	if (deliveryFrag.length > 1) {
-		var deliveryStr = deliveryFrag[1].split("<dd>")[1].split("</dd>")[0].trim();
-
-		if (deliveryStr.split("Information unavailable").length > 1) {
-			metadata.delivery = $L("Unknown");
-		} else {
-			metadata.delivery = deliveryStr;
+	var status = 0;
+	var newPackageInd = responseText.indexOf("Action Unavailable at This Time");
+	if (newPackageInd != -1) {
+		var statusText = responseText.split("<div class=\"content\">")[1].split("<p class=\"buffer_bottom\">")[1].split("</p>")[0];
+		var dateTodayString = Mojo.Format.formatDate(new Date(), {date: "short", time: "short"});
+		var details = [];
+		
+		details.push({date: dateTodayString, location: "", notes: statusText});
+		
+		this.callbackStatus(0);
+		this.callbackDetails(details.clone());
+	} else {
+		var statusText = responseText.split("Package Progress")[1];
+		// TODO: Make this more efficient, use else if
+		if(statusText.split("HERKUNFTSSCAN").length > 1 || statusText.split("Herkunfts Scan").length > 1 ||
+			statusText.split("Auftrag verarbeitet").length > 1 || statusText.split("Origin Scan").length > 1 ||
+			statusText.split("Order Processed").length > 1) {
+			status = 1;
 		}
-	}
+		if(statusText.split("ABFAHRTSSCAN").length > 1 || statusText.split("Abfahrts Scan").length > 1 ||
+			statusText.split("Departure Scan").length > 1) {
+			status = 2;
+		}
+		if(statusText.split("ANKUNFTSSCAN").length > 1 || statusText.split("Ankunfts Scan").length > 1 ||
+		   statusText.split("Arrival Scan").length > 1) {
+			status = 3;
+		}
+		if(statusText.split("In Transit").length > 1) {
+			status = 3;
+		}
+		if(statusText.split("WIRD ZUGESTELLT").length > 1 || statusText.split("Wird zugestellt").length > 1 ||
+		   statusText.split("Out For Delivery").length > 1) {
+			status = 4;
+		}
+		if(statusText.split("UPS hat die Sendung zugestellt").length > 1 || statusText.split("UPS has delivered the shipment").length > 1 ||
+		   statusText.split("Delivered").length > 1 || statusText.split("Package picked up at UPS Access Point").length > 1) {
+		    status = 5;
+		}
+		if(statusText.split("1Z9999999999999999").length > 1) {
+			status = -1;
+		}
 
-	var serviceFrag = responseText.split("<dt>Service Level:</dt>");
-	if (serviceFrag.length > 1) {
-		var serviceStr = serviceFrag[1].split("<dd>")[1].split("</dd>")[0].trim();
+		this.callbackStatus(status);
 
-		if (serviceStr) {
-            metadata.serviceclass = serviceStr;
-        }
-	}
+		var metadata = {};
+		var deliveryFrag = responseText.split("Delivery Date:</dt>");
+		if (deliveryFrag.length > 1) {
+			var deliveryStr = deliveryFrag[1].split("<dd>")[1].split("</dd>")[0].trim();
 
-	if (metadata != {}) {
-		this.callbackMetadata(metadata);
+			if (deliveryStr.split("Information unavailable").length > 1) {
+				metadata.delivery = $L("Unknown");
+			} else {
+				metadata.delivery = deliveryStr;
+			}
+		}
+
+		var serviceFrag = responseText.split("<dt>Service Level:</dt>");
+		if (serviceFrag.length > 1) {
+			var serviceStr = serviceFrag[1].split("<dd>")[1].split("</dd>")[0].trim();
+
+			if (serviceStr) {
+		    metadata.serviceclass = serviceStr;
+		}
+		}
+
+		if (metadata != {}) {
+			this.callbackMetadata(metadata);
+		}
 	}
 
     if(status > 0) {

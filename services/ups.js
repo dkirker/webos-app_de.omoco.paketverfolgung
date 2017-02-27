@@ -2,11 +2,11 @@ function UPS() {
 }
 
 UPS.prototype.getAuthor = function() {
-	return "Sebastian Hammerl";
+	return "Sebastian Hammerl, Donald Kirker";
 }
 
 UPS.prototype.getVersion = function() {
-	return "1.0";
+	return "1.3";
 }
 
 UPS.prototype.getColor = function() {
@@ -76,9 +76,12 @@ UPS.prototype.getDetailsRequestSuccessMobile = function(response) {
 	if (newPackageInd != -1) {
 		var statusText = responseText.split("<div class=\"content\">")[1].split("<p class=\"buffer_bottom\">")[1].split("</p>")[0];
 		var dateTodayString = Mojo.Format.formatDate(new Date(), {date: "short", time: "short"});
+		var details = [];
+		
+		details.push({date: dateTodayString, location: "", notes: statusText});
 		
 		this.callbackStatus(0);
-		this.callbackDetails([{date: dateTodayString, location: "", notes: statusText}]);
+		this.callbackDetails(details.clone());
 	} else {
 		var statusText = responseText.split("Package Progress")[1];
 		// TODO: Make this more efficient, use else if

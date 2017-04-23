@@ -36,16 +36,16 @@ USPS.prototype.getDetails = function() {
 };
 
 USPS.prototype.getDetailsRequestSuccess = function(response) {
-//Mojo.Log.info("tracking # " + this.id);
+Mojo.Log.info("tracking # " + this.id);
 	var responseText = response.responseText;
-//Mojo.Log.info("responseText: " +responseText);
+Mojo.Log.info("responseText: " +responseText);
 	//var responseText2 = responseText.split("<tbody class=\"details\">")[1];
 	var statusFrag = responseText.split("<div class=\"package-note");//[1].split("</div>")[0];
 	var statusText = "";
-//Mojo.Log.info("statusFrag: " + statusFrag);
+Mojo.Log.info("statusFrag: " + statusFrag);
 	if (statusFrag.length > 1) {
 		statusFrag = statusFrag[1].split("</div>")[0];
-//Mojo.Log.info("statusFrag: " + statusFrag);
+Mojo.Log.info("statusFrag: " + statusFrag);
 	}
 	if (statusFrag.indexOf("<h3>") != -1) {
 		statusText = statusFrag.split("<h3>")[1].split("</h3>")[0].replace(/\:/g, " ").trim();
@@ -53,7 +53,7 @@ USPS.prototype.getDetailsRequestSuccess = function(response) {
 	if (statusFrag.indexOf("<span>") != -1) {
 		statusText += statusFrag.split("<span>")[1].split("</span>")[0].replace(/\:/g, " ").trim();
 	}
-//Mojo.Log.info("statusText: " +statusText);
+Mojo.Log.info("statusText: " +statusText);
 	// Real USPS statuses:
 	//<div class="progress-indicator">
 	//	<h2 class="hide-fromsighted">in-transit</h2>
@@ -113,8 +113,10 @@ USPS.prototype.getDetailsRequestSuccess = function(response) {
 			spanidx = 1;
 		}
 		deliveryStr = deliveryStr.split("</span>")[spanidx].trim();
-//Mojo.Log.info("deliveryStr: " + deliveryStr);
+Mojo.Log.info("deliveryStr: " + deliveryStr);
 		metadata.delivery = deliveryStr;
+	} else if (statusText.toLowerCase().indexOf("delayed") != -1) {
+		metadata.delivery = "Delayed";
 	}
 
 	var utagFrag = responseText.split("<script type=\"text/javascript\" id=\"tealiumUtagData\">")
@@ -133,8 +135,14 @@ USPS.prototype.getDetailsRequestSuccess = function(response) {
 
 		if (serviceStr != null && serviceStr !== "null") {
 			metadata.serviceclass = serviceStr;
-//Mojo.Log.info("serviceStr: " + serviceStr);
+Mojo.Log.info("serviceStr: " + serviceStr);
 		}
+	} else if (responseText.indexOf("dataLayer.push") != -1) {
+		var dataLayerText = responseText.split("dataLayer.push(")[1].split(")")[0];
+		var dataLayer = JSON.parse(dataLayerText); // This could be dangerous!! TODO: Pick a better method?
+
+		if (dataLayer && dataLayer.product && dataLayer.product !== "null")
+			metadata.serviceclass = dataLayer.product;
 	}
 
 	if (metadata != {}) {
@@ -147,10 +155,10 @@ USPS.prototype.getDetailsRequestSuccess = function(response) {
 		var scanHistory = responseText.split("<div class=\"scan-history")[1];
 		var detailsText = scanHistory.split("<div class=\"package-note ui-border-dotted-bottom\">");
 		for (var i = 1; i < detailsText.length; i++) {
-//Mojo.Log.info("detailsText[" + i + "]: " + detailsText[i]);
+Mojo.Log.info("detailsText[" + i + "]: " + detailsText[i]);
 			var tmpDateStr = detailsText[i].split("<h3>")[1].split("<br />")[0].replace(/[\r]/g, " ").replace(/[^,: a-zA-Z0-9]/g, "").trim() + " " +
 				detailsText[i].split("<br />")[1].split("</h3>")[0].replace(/[\r]/g, " ").replace(/[^,: a-zA-Z0-9]/g, "").trim();
-//Mojo.Log.info("tmpDateStr: " + tmpDateStr);
+Mojo.Log.info("tmpDateStr: " + tmpDateStr);
 			var tmpLoc = "";
 			var tmpNotes = "";
 			/*if (i == 1) {
@@ -166,8 +174,8 @@ USPS.prototype.getDetailsRequestSuccess = function(response) {
                 tmpLoc = detailsText[i].split("<br/>")[1].split("</p>")[0].replace(/[\r]/g, " ").replace(/&nbsp;/g, " ").trim();
                 tmpNotes = detailsText[i].split("<p>")[1].split("<br/>")[0].replace(/[\r]/g, " ").replace(/&nbsp;/g, " ").replace(/,/g, " ").trim();
 			//}
-//Mojo.Log.info("tmpLoc: " + tmpLoc);
-//Mojo.Log.info("tmpNotes: " +tmpNotes);
+Mojo.Log.info("tmpLoc: " + tmpLoc);
+Mojo.Log.info("tmpNotes: " +tmpNotes);
 			details.push({date: tmpDateStr, location: tmpLoc, notes: tmpNotes});
 		}
 		
@@ -175,15 +183,15 @@ USPS.prototype.getDetailsRequestSuccess = function(response) {
 		this.callbackDetails(details.clone());	
 	} else {
 		var errorFrag = responseText.split("<section class=\"list-view\">");//[1].split("</section>")[0];
-//Mojo.Log.info("errorFrag: " + errorFrag);
+Mojo.Log.info("errorFrag: " + errorFrag);
 		if (errorFrag.length == 1) {
 			errorFrag = responseText.split("<section class=\"content\">");
 		}
-//Mojo.Log.info("errorFrag: " + errorFrag);
+Mojo.Log.info("errorFrag: " + errorFrag);
 		if (errorFrag.length > 1) {
 			errorFrag = errorFrag[1].split("</section>")[0];
 		}
-//Mojo.Log.info("errorFrag: " + errorFrag);
+Mojo.Log.info("errorFrag: " + errorFrag);
 		var errorText = "";
 		var errorParts = errorFrag.split("<p");
 

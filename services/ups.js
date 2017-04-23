@@ -6,7 +6,7 @@ UPS.prototype.getAuthor = function() {
 }
 
 UPS.prototype.getVersion = function() {
-	return "1.3";
+	return "1.3.1";
 }
 
 UPS.prototype.getColor = function() {
@@ -116,8 +116,18 @@ UPS.prototype.getDetailsRequestSuccessMobile = function(response) {
 		this.callbackStatus(status);
 
 		var metadata = {};
-		var deliveryFrag = responseText.split("Delivery Date:</dt>");
-		if (deliveryFrag.length > 1) {
+		var deliveryFrag = null;
+		// TODO: I feel like this could be cleaned up to one statement. However, care must be taken to ignore the "Delivered To" section
+		if (responseText.indexOf("Delivery Date") != -1) {
+			deliveryFrag = responseText.split("Delivery Date:</dt>");
+		} else if (responseText.indexOf("Scheduled Delivery:") != -1) {
+			deliveryFrag = responseText.split("Scheduled Delivery:</dt>");
+		} else if (responseText.indexOf("Scheduled Delivery (Updated):") != -1) {
+			deliveryFrag = responseText.split("Scheduled Delivery (Updated):</dt>");
+		} else if (responseText.indexOf("Delivered On:") != -1) {
+			deliveryFrag = responseText.split("Delivered On:</dt>");
+		}
+		if (deliveryFrag && deliveryFrag.length > 1) {
 			var deliveryStr = deliveryFrag[1].split("<dd>")[1].split("</dd>")[0].trim();
 
 			if (deliveryStr.split("Information unavailable").length > 1) {
@@ -244,3 +254,4 @@ UPS.prototype.getDetailsRequestFailure = function(response) {
 };
 
 registerService("UPS", new UPS());
+

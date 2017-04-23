@@ -97,7 +97,7 @@ Amazon.prototype.getDetailsRequestSuccess = function(response) {
 		for (var i = 1; i < detailsText.length; i++) {
 			var detailText = detailsText[i];
 //Mojo.Log.info("detailsText[" + i + "]: " + detailsText[i]);
-			var tmpDateStr = dayMonthText + " " + detailText.split("ship-track-grid-fixed-column\">")[1].split("</div>")[0].trim();
+			var tmpDateStr = dayMonthText + " " + detailText.split("ship-track-fixed-column-top\">")[1].split("</div>")[0].trim();
 //Mojo.Log.info("tmpDateStr: " + tmpDateStr);
 			var tmpDetailsStr = detailText.split("ship-track-grid-responsive-column")[1].split("</div>")[0].trim();
 			var tmpNotes = tmpDetailsStr.split("<span>")[1].split("</span>")[0].trim();

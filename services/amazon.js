@@ -45,11 +45,11 @@ Amazon.prototype.getDetails = function() {
 };
 
 Amazon.prototype.getDetailsRequestSuccess = function(response) {
-//Mojo.Log.info("tracking # " + this.id);
+Mojo.Log.info("AMZ tracking # " + this.id);
 	var responseText = response.responseText;
-//Mojo.Log.info("responseText: " +responseText);
+Mojo.Log.info("AMZ responseText: " +responseText);
 //	var statusText = "";
-//Mojo.Log.info("statusFrag: " + statusText);
+//Mojo.Log.info("AMZ statusFrag: " + statusText);
 
 
 	var status = 0;
@@ -59,10 +59,12 @@ Amazon.prototype.getDetailsRequestSuccess = function(response) {
         status = 3;
     } else if (responseText.indexOf("<span class=\"ordered-status\"") != -1) {
 		status = 1;
+	} else if (responseText.indexOf("<h4 class=\"a-alert-heading\">Delayed") != -1) {
+		status = 1; // TODO: Error status
 	} else {
 		status = 1; //0;
 	}
-//Mojo.Log.info("status: " +status);
+Mojo.Log.info("AMZ status: " +status);
 	// Defer this
 	//this.callbackStatus(status);
 
@@ -72,12 +74,12 @@ Amazon.prototype.getDetailsRequestSuccess = function(response) {
 	if (deliveryFrag.length > 1) {
 		deliveryStr = deliveryFrag[1].split("</span>")[0].trim();
 	} else { // We must have mobile...
-		deliveryStr = responseText.split("<div class=\"a-column a-span12 shipment-status-content\">")[1].split("<span class=\"a-size-base a-color-success a-text-bold\">")[1].split("</span>")[0].trim();
+		deliveryStr = responseText.split("<div class=\"a-column a-span12 shipment-status-content\">")[1].split("<span ")[1].split("a-text-bold\">")[1].split("</span>")[0].trim();
 	}
 	if (deliveryStr != "") {
 		metadata.delivery = deliveryStr;
 	}
-//Mojo.Log.info("deliveryStr: " +deliveryStr);
+Mojo.Log.info("AMZ deliveryStr: " +deliveryStr);
 
 	var serviceStr = "";
 	if (serviceStr != "") {
@@ -92,13 +94,13 @@ Amazon.prototype.getDetailsRequestSuccess = function(response) {
 	var details = [];
 	if (status > 0) {
 		var dayMonthText = responseText.split("Latest update: ")[1].split("</span>")[0].trim();
-//Mojo.Log.info("dayMonthText: " +dayMonthText);
+Mojo.Log.info("AMZ dayMonthText: " +dayMonthText);
 		var detailsText = responseText.split("ship-track-time-grid\">");
 		for (var i = 1; i < detailsText.length; i++) {
 			var detailText = detailsText[i];
-//Mojo.Log.info("detailsText[" + i + "]: " + detailsText[i]);
+Mojo.Log.info("AMZ detailsText[" + i + "]: " + detailsText[i]);
 			var tmpDateStr = dayMonthText + " " + detailText.split("ship-track-fixed-column-top\">")[1].split("</div>")[0].trim();
-//Mojo.Log.info("tmpDateStr: " + tmpDateStr);
+Mojo.Log.info("AMZ tmpDateStr: " + tmpDateStr);
 			var tmpDetailsStr = detailText.split("ship-track-grid-responsive-column")[1].split("</div>")[0].trim();
 			var tmpNotes = tmpDetailsStr.split("<span>")[1].split("</span>")[0].trim();
 			var tmpLocFrag = tmpDetailsStr.split("class=\"a-color-secondary\">");
@@ -118,12 +120,15 @@ Amazon.prototype.getDetailsRequestSuccess = function(response) {
 				status = 3;
 			} else if (tmpNotes.indexOf("Package has left seller facility and is in transit to carrier") != -1 && status < 2) {
 				status = 2;
+			} else if (status && responseText.indexOf("<h4 class=\"a-alert-heading\">Delayed") != -1) {
+				status = 0;
 			}
-//Mojo.Log.info("tmpLoc: " + tmpLoc);
-//Mojo.Log.info("tmpNotes: " +tmpNotes);
+Mojo.Log.info("AMZ tmpLoc: " + tmpLoc);
+Mojo.Log.info("AMZ tmpNotes: " +tmpNotes);
 			if (detailText.indexOf("a-color-alternate-background") != -1 &&
 				detailText.indexOf("a-text-bold") != -1) {
 				dayMonthText = detailText.split("a-text-bold\">")[1].split("</span>")[0].trim();
+Mojo.Log.info("AMZ dayMonthText: " +dayMonthText);
 			}
 			details.push({date: tmpDateStr, location: tmpLoc, notes: tmpNotes});
 		}

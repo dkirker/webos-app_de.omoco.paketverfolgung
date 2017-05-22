@@ -41,16 +41,21 @@ DHLGM.prototype.getDetailsRequestSuccess = function(response) {
 Mojo.Log.info("DHL GM responseText = " + responseText);
 
 	var status = 0;
-	if (responseText.indexOf("<h2>Picked Up</h2>") != -1) { // Need confirm
-		status = 1;
-	} else if (responseText.indexOf("<h2>Processed</h2>") != -1) { // Need confirm
-		status = 2;
-	} else if (responseText.indexOf("<h2>En Route</h2>") != -1) {
-		status = 3;
-	} else if (responseText.indexOf("<h2>Out For Delivery</h2>") != -1) { // Need confirm
-		status = 4;
-	} else if (responseText.indexOf("<h2>Delivered</h2>") != -1) { // Need confirm
-		status = 5;
+	var statusFrag = responseText.split("class=\"status-info\">");
+	if (statusFrag.length > 1) {
+		if (statusFrag[1].indexOf("<h2>Picked Up</h2>") != -1) { // Need confirm
+			status = 1;
+		} else if (statusFrag[1].indexOf("<h2>Processed</h2>") != -1) { // Need confirm
+			status = 2;
+		} else if (statusFrag[1].indexOf("<h2>En Route</h2>") != -1) {
+			var statusDescrip = statusFrag[1].split("<em class=\"status-description\">");
+			status = 3; // statusDescrip[1].indexOf("Tendered to Service Provider" )
+			if (statusDescrip && statusDescrip[1].indexOf("Out for Delivery") != -1) {
+				status = 4;
+			}
+		} else if (statusFrag[1].indexOf("<h2>Delivered</h2>") != -1) { // Need confirm
+			status = 5;
+		} 
 	} else if (responseText.indexOf("<h4>No Results</h4>") != -1) {
 		status = -1;
 	}

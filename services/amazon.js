@@ -114,15 +114,16 @@ Mojo.Log.info("AMZ tmpDateStr: " + tmpDateStr);
 				status = 5;
 			} else if (tmpNotes.indexOf("Out for delivery") != -1 && status < 4) {
 				status = 4;
-			} else if (tmpNotes.indexOf("Package has left the carrier facility") != -1 || tmpNotes.indexOf("Shipment departed") != -1 ||
-					   tmpNotes.indexOf("Package has been") != -1 || tmpNotes.indexOf("Package received") != -1 ||
-					   tmpNotes.indexOf("Package arrived") != -1 && status < 3) {
+			} else if ((tmpNotes.indexOf("Package has left the carrier facility") != -1 || tmpNotes.indexOf("Shipment departed") != -1 ||
+					    tmpNotes.indexOf("Package has been") != -1 || tmpNotes.indexOf("Package received") != -1 ||
+					    tmpNotes.indexOf("Package arrived") != -1) && status < 3) {
 				status = 3;
 			} else if (tmpNotes.indexOf("Package has left seller facility and is in transit to carrier") != -1 && status < 2) {
 				status = 2;
 			} else if (status && responseText.indexOf("<h4 class=\"a-alert-heading\">Delayed") != -1) {
 				status = 0;
 			}
+Mojo.Log.info("latest AMZ status: " + status);
 Mojo.Log.info("AMZ tmpLoc: " + tmpLoc);
 Mojo.Log.info("AMZ tmpNotes: " +tmpNotes);
 			if (detailText.indexOf("a-color-alternate-background") != -1 &&

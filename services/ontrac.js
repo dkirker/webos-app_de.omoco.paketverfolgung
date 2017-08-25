@@ -2,11 +2,11 @@ function OnTrac() {
 }
 
 OnTrac.prototype.getAuthor = function() {
-	return "Sebastian Hammerl";
+	return "Sebastian Hammerl, Donald Kirker";
 }
 
 OnTrac.prototype.getVersion = function() {
-	return "1.0";
+	return "1.1";
 }
 
 OnTrac.prototype.getColor = function() {
@@ -59,6 +59,19 @@ OnTrac.prototype.getDetailsRequestSuccess = function(response) {
 	}
 
 	this.callbackStatus(status);
+
+
+	var metadata = {};
+	if (responseText.indexOf("Service Commitment Time") != -1) {
+		metadata.delivery = responseText.split("Service Commitment Time")[1].split("<TD bgcolor=#ffffff width=\"60%\" nowrap>")[1].split("</TD>")[0].trim();
+	}
+	if (responseText.indexOf("Service Code") != -1) {
+		metadata.serviceclass = responseText.split("Service Code")[1].split("<TD bgcolor=#ffffff>")[1].split("</TD>")[0].trim();
+	}
+
+	if (metadata != {}) {
+		this.callbackMetadata(metadata);
+	}
 
 	if(status > 0) {
 		var details = [];

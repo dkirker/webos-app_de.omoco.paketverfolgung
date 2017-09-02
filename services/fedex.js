@@ -6,7 +6,7 @@ FedEx.prototype.getAuthor = function() {
 }
 
 FedEx.prototype.getVersion = function() {
-	return "1.1";
+	return "1.2";
 }
 
 FedEx.prototype.getColor = function() {
@@ -81,25 +81,29 @@ FedEx.prototype.getDetailsRequestSuccess = function(response) {
 	var keyStatus = json.TrackPackagesResponse.packageList[0].keyStatus;
 	var status = 0;
 
-	Mojo.Log.info("errorCode: ", errorCode, "keyStatus: ", keyStatus);
-	//Mojo.Log.info("JSON: ", response.responseText);
+	if (!keyStatus) {
+		this.callbackStatus(-1);
+		return;
+	} else {
+		keyStatus = keyStatus.toLowerCase();
+	}
 
+	Mojo.Log.info("errorCode: ", errorCode, "keyStatus: ", keyStatus);
+Mojo.Log.info("JSON: ", response.responseText);
 	// TODO: I am only certain on "errorCode" and "keyStatus" == "In transit"
 	if (errorCode != 0) {
 		status = -1;
-	} else if (keyStatus.indexOf("Initiated") != -1 || keyStatus.indexOf("Label created") != -1) {
+	} else if (keyStatus.indexOf("initiated") != -1 || keyStatus.indexOf("label created") != -1) {
 		status = 1;
-	} else if (keyStatus.indexOf("Picked") != -1) {
+	} else if (keyStatus.indexOf("picked") != -1) {
 		status = 2;
-	} else if (keyStatus.indexOf("On schedule") != -1 || keyStatus.indexOf("In transit") != -1) {
+	} else if (keyStatus.indexOf("on schedule") != -1 || keyStatus.indexOf("in transit") != -1) {
 		status = 3;
-	} else if (keyStatus.indexOf("delivery") != -1 || keyStatus.indexOf("Delivery") != -1 || keyStatus.indexOf("Exception") != -1) { // Exceptions can happen anywhere, and this shouldn't be indicitive of "out for delivery"
+	} else if (keyStatus.indexOf("delivery") != -1 || keyStatus.indexOf("exception") != -1) { // Exceptions can happen anywhere, and this shouldn't be indicitive of "out for delivery"
 		status = 4;
-	} else if (keyStatus.indexOf("delivered") != -1 || keyStatus.indexOf("Delivered") != -1) {
+	} else if (keyStatus.indexOf("delivered") != -1) {
 		status = 5;
 	}
-
-	this.callbackStatus(status);
 
 	var metadata = {};
 	if (json.TrackPackagesResponse.packageList[0].displayEstDeliveryDateTime &&
@@ -115,19 +119,23 @@ FedEx.prototype.getDetailsRequestSuccess = function(response) {
 		this.callbackMetadata(metadata);
 	}
 
+	var details = [];
 	if (status > 0) {
 		var detailsVar = json.TrackPackagesResponse.packageList[0].scanEventList;
-		var details = [];
 		for (var i = 0; i < detailsVar.length; i++) {
 			var tmpDate = detailsVar[i].date + " " + detailsVar[i].time + " " + detailsVar[i].gmtOffset;
 			Mojo.Log.info("date: ", tmpDate, " location: ", detailsVar[i].scanLocation, " notes: ", detailsVar[i].status);
 			details.push({date: tmpDate, location: detailsVar[i].scanLocation, notes: detailsVar[i].status});
-			if (detailsVar[i].status.indexOf("delivery") != -1 || detailsVar[i].status.indexOf("Delivery") != -1) {
-				this.callbackStatus(4); // Hack for "Out for delivery"
+			if (detailsVar[i].status.toLowerCase().indexOf("delivery") != -1 && status < 4) {
+				status = 4; // Hack for "Out for delivery"
 			}
 		}
-		
-		this.callbackDetails(details.clone());	
+	}
+
+	this.callbackStatus(status);
+
+	if (details.length > 0) {
+		this.callbackDetails(details.clone());
 	}
 };
 

@@ -93,7 +93,14 @@ Mojo.Log.info("AMZ deliveryStr: " +deliveryStr);
 
 	var details = [];
 	if (status > 0) {
-		var dayMonthText = responseText.split("Latest update: ")[1].split("</span>")[0].trim();
+		var dayMonthText = ""
+		var dayMonthFrag = responseText.split("Latest update: ");
+		
+		if (dayMonthFrag.length > 1) {
+			dayMonthText = dayMonthFrag[1].split("</span>")[0].trim();
+		} else {
+			dayMonthText = Mojo.Format.formatDate(new Date(), {date: "long"});
+		}
 Mojo.Log.info("AMZ dayMonthText: " +dayMonthText);
 		var detailsText = responseText.split("ship-track-time-grid\">");
 		for (var i = 1; i < detailsText.length; i++) {

@@ -105,7 +105,11 @@ Mojo.Log.info("statusText: " +statusText);
 	// Updated Delivery Day:</h3>
 	// <span class="value">DATE_STR</span>
 	var metadata = {};
-	var deliveryFrag = responseText.split(" Delivery Day:</h3>");
+	var deliveryDay = responseText.split(" Delivery Day:</h3>");
+	var deliveryBy = responseText.split(" Delivery By:</h3>");
+	var deliveryOn = responseText.split(" Delivery On:</h3>");
+	var deliveryFrag = (deliveryBy.length > 1) ? deliveryBy : (deliveryDay.length > 1) ? deliveryDay : deliveryOn;
+
 	if (deliveryFrag.length > 1) {
 		var deliveryStr = deliveryFrag[1].split("<span class=\"value\">")[1];
 		var spanidx = 0;

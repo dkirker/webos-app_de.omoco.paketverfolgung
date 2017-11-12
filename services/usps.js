@@ -167,9 +167,9 @@ Mojo.Log.info("tmpDateStr: " + tmpDateStr);
 				tmpLoc = detailsSplit[1].split("<td class=\"location\">")[1].split("<p>")[1].split("</td>")[0].replace(/[\r]/g, " ").replace(/&nbsp;/g, " ").trim();
 				tmpNotes = detailsSplit[1].split("<td class=\"status\">")[1].split("<p")[1].split("</p>")[0].split(">")[1].replace(/[\r]/g, " ").replace(/&nbsp;/g, " ").trim();
 			
-				if (tmpNotes.indexOf("Out for Delivery") != -1) {
+				if (tmpNotes.toLowerCase().indexOf("out for delivery") != -1) {
 					status = 4;
-				} else if (tmpNotes.indexOf("Delivery status not updated") != -1) {
+				} else if (tmpNotes.toLowerCase().indexOf("delivery status not updated") != -1) {
 					status = 0;
 				}			
 			} else {*/
@@ -178,6 +178,14 @@ Mojo.Log.info("tmpDateStr: " + tmpDateStr);
 			//}
 Mojo.Log.info("tmpLoc: " + tmpLoc);
 Mojo.Log.info("tmpNotes: " +tmpNotes);
+
+				if (tmpNotes.toLowerCase().indexOf("out for delivery") != -1) {
+					status = 4;
+					this.callbackStatus(status);
+				} else if (tmpNotes.toLowerCase().indexOf("delivery status not updated") != -1) {
+					status = 0;
+					this.callbackStatus(status);
+				}
 			details.push({date: tmpDateStr, location: tmpLoc, notes: tmpNotes});
 		}
 		

@@ -81,7 +81,9 @@ Mojo.Log.info("statusText: " +statusText);
 	} else if (statusText.toLowerCase().indexOf("accepted") != -1) {
 		status = 2;
 	} else if (statusText.toLowerCase().indexOf("out for delivery") != -1 ||
-			   statusText.toLowerCase().indexOf("out-for-delivery") != -1) {
+			   statusText.toLowerCase().indexOf("out-for-delivery") != -1 ||
+               statusText.toLowerCase().indexOf("delivery attempt") != -1 ||
+               statusText.toLowerCase().indexOf("notice left") != -1) {
 		status = 4;
 	} else if (statusText.toLowerCase().indexOf("in transit") != -1 ||
 			   statusText.toLowerCase().indexOf("in-transit") != -1 ||

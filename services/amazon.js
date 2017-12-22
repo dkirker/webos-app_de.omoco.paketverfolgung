@@ -70,7 +70,7 @@ Mojo.Log.info("AMZ status: " +status);
 
 	var metadata = {};
 	var deliveryStr = "";
-	var deliveryFrag = responseText.split("<span class=\"delivery-date\">")
+	var deliveryFrag = responseText.split("<span class=\"delivery-date\">");
 	if (deliveryFrag.length > 1) {
 		deliveryStr = deliveryFrag[1].split("</span>")[0].trim();
 	} else { // We must have mobile...
@@ -117,7 +117,7 @@ Mojo.Log.info("AMZ tmpDateStr: " + tmpDateStr);
 				tmpLoc = tmpLocFrag[1].split("</span>")[0].trim();
 			}
 
-			if (deliveryStr.indexOf("Delivered") != -1 && status < 5) {
+			if ((tmpNotes.indexOf("Delivered") != -1 || tmpNotes.indexOf("Available for pickup") != -1) && status < 5) {
 				status = 5;
 			} else if (tmpNotes.indexOf("Out for delivery") != -1 && status < 4) {
 				status = 4;

@@ -45,6 +45,22 @@ Amazon.prototype.getDetails = function() {
 };
 
 Amazon.prototype.getDetailsRequestSuccess = function(response) {
+    var responseText = response.responseText.split("<body")[1];
+    
+    if (responseText.indexOf("ship-track-time-grid") != -1) {
+Mojo.Log.info("AMZ using details A");
+        this.getDetailsA({responseText: responseText});
+    } else if (responseText.indexOf("tracking-events-container") != -1) {
+Mojo.Log.info("AMZ using details B");
+        this.getDetailsB({responseText: responseText});
+    } else {
+Mojo.Log.info("AMZ unable to read details");
+        //this.callbackStatus(-1);
+        this.callbackError($L("Error loading data from Amazon."));
+    }
+};
+	
+Amazon.prototype.getDetailsA = function(response) {
 Mojo.Log.info("AMZ tracking # " + this.id);
 	var responseText = response.responseText;
 Mojo.Log.info("AMZ responseText: " +responseText);
@@ -123,7 +139,7 @@ Mojo.Log.info("AMZ tmpDateStr: " + tmpDateStr);
 				status = 4;
 			} else if ((tmpNotes.indexOf("Package has left the carrier facility") != -1 || tmpNotes.indexOf("Shipment departed") != -1 ||
 					    tmpNotes.indexOf("Package has been") != -1 || tmpNotes.indexOf("Package received") != -1 ||
-					    tmpNotes.indexOf("Package arrived") != -1) && status < 3) {
+					    tmpNotes.indexOf("Package arrived") != -1 || tmpNotes.indexOf("Shipment arrived") != -1) && status < 3) {
 				status = 3;
 			} else if (tmpNotes.indexOf("Package has left seller facility and is in transit to carrier") != -1 && status < 2) {
 				status = 2;
@@ -139,6 +155,110 @@ Mojo.Log.info("AMZ tmpNotes: " +tmpNotes);
 Mojo.Log.info("AMZ dayMonthText: " +dayMonthText);
 			}
 			details.push({date: tmpDateStr, location: tmpLoc, notes: tmpNotes});
+		}
+		
+		this.callbackStatus(status);
+		this.callbackDetails(details.clone());	
+	} else {
+		var errorText = "";
+
+		if (errorText != "") {
+			var dateTodayString = Mojo.Format.formatDate(new Date(), {date: "short", time: "short"});
+//Mojo.Log.info("error: " + errorText);
+			details.push({date: dateTodayString, location: "", notes: errorText});
+			this.callbackStatus(0);
+			this.callbackDetails(details.clone());
+		}
+	}
+};
+
+Amazon.prototype.getDetailsB = function(response) {
+Mojo.Log.info("AMZ tracking # " + this.id);
+	var responseText = response.responseText;
+Mojo.Log.info("AMZ responseText: " +responseText);
+//	var statusText = "";
+//Mojo.Log.info("AMZ statusFrag: " + statusText);
+
+
+	var status = 0;
+	/*if (responseText.indexOf("<span class=\"delivery-status\"") != -1) {
+		status = 5;
+	} else if (responseText.indexOf("<span class=\"shipped-status\"") != -1) {
+        status = 3;
+    } else if (responseText.indexOf("<span class=\"ordered-status\"") != -1) {
+		status = 1;
+	} else if (responseText.indexOf("<h4 class=\"a-alert-heading\">Delayed") != -1) {
+		status = 1; // TODO: Error status
+	} else {
+		status = 1; //0;
+	}*/
+    if (responseText.indexOf("Ordered <span class=\"nowrap\"") != -1) {
+        status = 1;
+    } else {
+        this.callbackStatus(0);
+    }
+Mojo.Log.info("AMZ status: " +status);
+	// Defer this
+	//this.callbackStatus(status);
+
+	var metadata = {};
+	var deliveryStr = "";
+    // TODO: Parse this better
+	var deliveryFrag = responseText.split("<span id=\"primaryStatus\"");
+	if (deliveryFrag.length > 1) {
+		deliveryStr = deliveryFrag[1].split("<span class=\"nowrap\">")[1].split("</span>")[0].trim();
+	}
+	if (deliveryStr != "") {
+		metadata.delivery = deliveryStr;
+	}
+Mojo.Log.info("AMZ deliveryStr: " +deliveryStr);
+
+	var serviceStr = "";
+	if (serviceStr != "") {
+		metadata.serviceclass = serviceStr;
+	}
+
+	if (metadata != {}) {
+		this.callbackMetadata(metadata);
+	}
+
+
+	var details = [];
+	if (status > 0) {
+		var dayMonthText = ""
+		var dayRow = responseText.split("<div class=\"a-row tracking-event-date-header\">");
+		for (var j = 1; j < dayRow.length; j++) { // Date Row
+            dayMonthText = dayRow[j].split("<span class=\"tracking-event-date\">")[1].split("</span>")[0].trim();
+Mojo.Log.info("AMZ dayMonthText: " +dayMonthText);
+            
+            var detailsText = dayRow[j].split("<div class=\"a-row a-spacing-large a-spacing-top-medium\">");
+            for (var i = 1; i < detailsText.length; i++) {
+                var detailText = detailsText[i];
+    Mojo.Log.info("AMZ detailsText[" + i + "]: " + detailsText[i]);
+                var tmpDateStr = dayMonthText + " " + detailText.split("<span class=\"tracking-event-time\">")[1].split("</span>")[0].trim();
+    Mojo.Log.info("AMZ tmpDateStr: " + tmpDateStr);
+                var tmpNotes = detailText.split("<span class=\"tracking-event-message\">")[1].split("</span>")[0].trim();
+                var tmpLoc = detailText.split("<span class=\"tracking-event-location\">")[1].split("</span")[0].trim();
+
+                if ((tmpNotes.indexOf("Delivered") != -1 || tmpNotes.indexOf("Available for pickup") != -1) && status < 5) {
+                    status = 5;
+                } else if (tmpNotes.indexOf("Out for delivery") != -1 && status < 4) {
+                    status = 4;
+                } else if ((tmpNotes.indexOf("Package has left the carrier facility") != -1 || tmpNotes.indexOf("Shipment departed") != -1 ||
+                            tmpNotes.indexOf("Package has been") != -1 || tmpNotes.indexOf("Package received") != -1 ||
+                            tmpNotes.indexOf("Package arrived") != -1 || tmpNotes.indexOf("Shipment arrived") != -1) && status < 3) {
+                    status = 3;
+                } else if (tmpNotes.indexOf("Package has left seller facility and is in transit to carrier") != -1 && status < 2) {
+                    status = 2;
+                } else if (status && responseText.indexOf("<h4 class=\"a-alert-heading\">Delayed") != -1) {
+                    status = 0;
+                }
+    Mojo.Log.info("latest AMZ status: " + status);
+    Mojo.Log.info("AMZ tmpLoc: " + tmpLoc);
+    Mojo.Log.info("AMZ tmpNotes: " +tmpNotes);
+
+                details.push({date: tmpDateStr, location: tmpLoc, notes: tmpNotes});
+            }
 		}
 		
 		this.callbackStatus(status);

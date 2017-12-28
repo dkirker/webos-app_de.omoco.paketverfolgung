@@ -192,9 +192,13 @@ Mojo.Log.info("AMZ responseText: " +responseText);
 	} else {
 		status = 1; //0;
 	}*/
+	// TODO: Parse this better
+	var deliveryFrag = responseText.split("<span id=\"primaryStatus\"");
     if (responseText.indexOf("Ordered <span class=\"nowrap\"") != -1) {
         status = 1;
-    } else {
+    } else if (deliveryFrag.length > 1 && deliveryFrag[1].split("</span>")[0].indexOf("Delivered <span") != -1) {
+        status = 5;
+    } else { 
         this.callbackStatus(0);
     }
 Mojo.Log.info("AMZ status: " +status);
@@ -203,8 +207,6 @@ Mojo.Log.info("AMZ status: " +status);
 
 	var metadata = {};
 	var deliveryStr = "";
-    // TODO: Parse this better
-	var deliveryFrag = responseText.split("<span id=\"primaryStatus\"");
 	if (deliveryFrag.length > 1) {
 		deliveryStr = deliveryFrag[1].split("<span class=\"nowrap\">")[1].split("</span>")[0].trim();
 	}

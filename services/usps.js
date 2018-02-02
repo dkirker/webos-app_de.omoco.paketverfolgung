@@ -76,7 +76,8 @@ Mojo.Log.info("statusText: " +statusText);
 	var status = 0;
 	if (statusText.toLowerCase().indexOf("pre shipment") != -1 ||
 		statusText.toLowerCase().indexOf("pre-shipment") != -1 ||
-		statusText.toLowerCase().indexOf("on its way to usps") != -1) {
+		statusText.toLowerCase().indexOf("on its way to usps") != -1 ||
+		statusText.toLowerCase().indexOf("label created") != -1) {
 		status = 1;
 	} else if (statusText.toLowerCase().indexOf("accepted") != -1) {
 		status = 2;
@@ -189,6 +190,26 @@ Mojo.Log.info("tmpNotes: " +tmpNotes);
 					this.callbackStatus(status);
 				}
 			details.push({date: tmpDateStr, location: tmpLoc, notes: tmpNotes});
+		}
+
+		if (detailsText.length == 1) {
+			var detailFrag = responseText.split("<div class=\"package-note");
+			var detailText = "";
+Mojo.Log.info("detailFrag: " + detailFrag);
+			if (detailFrag.length > 2) { // First one was package status
+				detailFrag = detailFrag[2].split("</div>")[0];
+Mojo.Log.info("detailFrag: " + detailFrag);
+				if (detailFrag.indexOf("<span>") != -1) {
+					detailText = detailFrag.split("<span>")[1].split("</span>")[0];
+
+					if (detailText.indexOf("<br/>") != -1) {
+						detailText = detailText.split("<br/>")[0].trim();
+					}
+
+					var dateTodayString = Mojo.Format.formatDate(new Date(), {date: "short", time: "short"});
+					details.push({date: dateTodayString, location: "", notes: detailText});
+				}
+			}
 		}
 		
 		//this.callbackStatus(status);

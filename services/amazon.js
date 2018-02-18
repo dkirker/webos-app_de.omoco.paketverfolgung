@@ -52,7 +52,7 @@ Mojo.Log.info("AMZ using details A");
         this.getDetailsA({responseText: responseText});
     } else if (responseText.indexOf("tracking-events-container") != -1) {
 Mojo.Log.info("AMZ using details B");
-        this.getDetailsB({responseText: responseText});
+        this.getDetailsB({responseText: response.responseText});
     } else {
 Mojo.Log.info("AMZ unable to read details");
         //this.callbackStatus(-1);
@@ -194,20 +194,33 @@ Mojo.Log.info("AMZ responseText: " +responseText);
 	}*/
 	// TODO: Parse this better
 	var deliveryFrag = responseText.split("<span id=\"primaryStatus\"");
-    if (responseText.indexOf("Ordered <span class=\"nowrap\"") != -1) {
-        status = 1;
-    } else if (deliveryFrag.length > 1 && deliveryFrag[1].split("</span>")[0].indexOf("Delivered <span") != -1) {
-        status = 5;
-    } else { 
-        this.callbackStatus(0);
-    }
+	if (responseText.indexOf("Ordered <span class=\"nowrap\"") != -1) {
+		status = 1;
+	} else if (deliveryFrag.length > 1 && deliveryFrag[1].split("</span>")[0].indexOf("Delivered <span") != -1) {
+		status = 5;
+	} else { 
+		this.callbackStatus(0);
+	}
 Mojo.Log.info("AMZ status: " +status);
 	// Defer this
 	//this.callbackStatus(status);
 
 	var metadata = {};
 	var deliveryStr = "";
-	if (deliveryFrag.length > 1) {
+	var aStateStr = responseText.split("page-state");
+	var aStateJson = {};
+
+	if (aStateStr.length > 1) {
+		aStateStr = aStateStr[1].split("\">")[1].split("</script>")[0];
+Mojo.Log.info("AMZ aStateStr = " + aStateStr);
+		aStateJson = JSON.parse(aStateStr);
+	}
+
+	// {"deviceType":"desktop","progressTracker":{"lastTransitionPercentComplete":92,"lastReachedMilestone":"SHIPPED","numberOfReachedMilestones":2},"itemId":"xxxxxxxxxxxx","orderId":"XXX-XXXXXXX-XXXXXXX","isMfn":false,"shortStatus":"IN_TRANSIT","realm":"USAmazon","promise":{"secondaryPromiseIdentifier":"NONE","promiseMessage":"Arriving tomorrow by 8PM"},"themeParameters":"o=XXX-XXXXXXX-XXXXXXX&i=xxxxxxxxxxxx","visitTrigger":"UNKNOWN","trackingId":"TBA000000000000"}
+	if (aStateJson != {} && aStateJson.promise && aStateJson.promise.promiseMessage) {
+		deliveryStr = aStateJson.promise.promiseMessage;
+Mojo.Log.info("AMZ aState deliveryStr = " + deliveryStr);
+	} else if (deliveryFrag.length > 1) {
 		deliveryStr = deliveryFrag[1].split("<span class=\"nowrap\">")[1].split("</span>")[0].trim();
 	}
 	if (deliveryStr != "") {

@@ -250,7 +250,7 @@ Mojo.Log.error("details2[i] " + details2[i] + " details2[i+1] " + details2[i+1] 
 };
 
 UPS.prototype.getDetailsRequestFailure = function(response) {
-	this.callbackError("Konnte Seite nicht laden.");
+	this.callbackError($L("Could not connect to the remote server."));
 };
 
 registerService("UPS", new UPS());

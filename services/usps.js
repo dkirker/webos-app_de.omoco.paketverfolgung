@@ -67,6 +67,7 @@ Mojo.Log.info("statusText: " +statusText);
 	// delivered: 5
 	// alert: 3 (for now)
 	// error: 0
+	// not trackable: 0
 	// seized: 0
 	// archived: 0
 	// 
@@ -215,32 +216,53 @@ Mojo.Log.info("detailFrag: " + detailFrag);
 		//this.callbackStatus(status);
 		this.callbackDetails(details.clone());	
 	} else {
-		var errorFrag = responseText.split("<section class=\"list-view\">");//[1].split("</section>")[0];
-Mojo.Log.info("errorFrag: " + errorFrag);
-		if (errorFrag.length == 1) {
-			errorFrag = responseText.split("<section class=\"content\">");
-		}
-Mojo.Log.info("errorFrag: " + errorFrag);
-		if (errorFrag.length > 1) {
-			errorFrag = errorFrag[1].split("</section>")[0];
-		}
-Mojo.Log.info("errorFrag: " + errorFrag);
+		var useDefaultErrorHandling = true;
 		var errorText = "";
-		var errorParts = errorFrag.split("<p");
+		if (statusText.toLowerCase().indexOf("not trackable") != -1) {
+Mojo.Log.info("Got Not Trackable");
+			var notes = responseText.split("<div class=\"package-note");
+			if (notes.length > 2) { // There should be [{block before statusText},{statusText},{errorFrag}]
+				useDefaultErrorHandling = false;
 
-		for (var i = 0; i < errorParts.length; i++) {
-			if (i > 0)
-				errorText = errorText + " ";
-			errorText = errorText + errorParts[i].split("</p>")[0].substr(1).trim(); //.split(">")[1].trim();
+				var errorFrag = notes[2].split("<span>");
+Mojo.Log.info("errorFrag: " + (errorFrag.length > 1) ? errorFrag[1] : errorFrag);
+				if (errorFrag.length > 1) {
+					errorText = errorFrag[1].split("</span>")[0].trim();
+				} else {
+					errorText = errorFrag[0].trim();
+				}
+Mojo.Log.info("errorText: " + errorText);
+			}
 		}
-		errorText = errorText + " Check the tracking number and try again.";
+		
+		if (useDefaultErrorHandling) {
+			var errorFrag = responseText.split("<section class=\"list-view\">");//[1].split("</section>")[0];
+Mojo.Log.info("errorFrag: " + errorFrag);
+			if (errorFrag.length == 1) {
+				errorFrag = responseText.split("<section class=\"content\">");
+			}
+Mojo.Log.info("errorFrag: " + errorFrag);
+			if (errorFrag.length > 1) {
+				errorFrag = errorFrag[1].split("</section>")[0];
+			}
+Mojo.Log.info("errorFrag: " + errorFrag);
+			var errorParts = errorFrag.split("<p");
+
+			for (var i = 0; i < errorParts.length; i++) {
+				if (i > 0)
+					errorText = errorText + " ";
+				errorText = errorText + errorParts[i].split("</p>")[0].substr(1).trim(); //.split(">")[1].trim();
+			}
+			errorText = errorText + " Check the tracking number and try again.";
+		}
 
 		if (errorText != "") {
 			var dateTodayString = Mojo.Format.formatDate(new Date(), {date: "short", time: "short"});
 //Mojo.Log.info("error: " + errorText);
 			details.push({date: dateTodayString, location: "", notes: errorText});
-			this.callbackStatus(0);
-			this.callbackDetails(details.clone());
+			// Force update with "true"
+			this.callbackStatus(0, true);
+			this.callbackDetails(details.clone(), true);
 		}
 	}
 };

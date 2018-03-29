@@ -45,19 +45,21 @@ Amazon.prototype.getDetails = function() {
 };
 
 Amazon.prototype.getDetailsRequestSuccess = function(response) {
-    var responseText = response.responseText.split("<body")[1];
-    
-    if (responseText.indexOf("ship-track-time-grid") != -1) {
+	var responseSplit = response.responseText.split("<body");
+	var responseText = responseSplit[1];
+	var headText = responseSplit[0];
+
+	if (responseText.indexOf("ship-track-time-grid") != -1) {
 Mojo.Log.info("AMZ using details A");
-        this.getDetailsA({responseText: responseText});
-    } else if (responseText.indexOf("tracking-events-container") != -1) {
+		this.getDetailsA({responseText: responseText});
+	} else if (responseText.indexOf("tracking-events-container") != -1) {
 Mojo.Log.info("AMZ using details B");
-        this.getDetailsB({responseText: response.responseText});
-    } else {
+		this.getDetailsB({responseText: responseText, headText: headText});
+	} else {
 Mojo.Log.info("AMZ unable to read details");
-        //this.callbackStatus(-1);
-        this.callbackError($L("Error loading data from Amazon."));
-    }
+		//this.callbackStatus(-1);
+		this.callbackError($L("Error loading data from Amazon."));
+	}
 };
 	
 Amazon.prototype.getDetailsA = function(response) {
@@ -207,7 +209,7 @@ Mojo.Log.info("AMZ status: " +status);
 
 	var metadata = {};
 	var deliveryStr = "";
-	var aStateStr = responseText.split("page-state");
+	var aStateStr = response.headText.split("page-state");
 	var aStateJson = {};
 
 	if (aStateStr.length > 1) {
@@ -217,6 +219,13 @@ Mojo.Log.info("AMZ aStateStr = " + aStateStr);
 	}
 
 	// {"deviceType":"desktop","progressTracker":{"lastTransitionPercentComplete":92,"lastReachedMilestone":"SHIPPED","numberOfReachedMilestones":2},"itemId":"xxxxxxxxxxxx","orderId":"XXX-XXXXXXX-XXXXXXX","isMfn":false,"shortStatus":"IN_TRANSIT","realm":"USAmazon","promise":{"secondaryPromiseIdentifier":"NONE","promiseMessage":"Arriving tomorrow by 8PM"},"themeParameters":"o=XXX-XXXXXXX-XXXXXXX&i=xxxxxxxxxxxx","visitTrigger":"UNKNOWN","trackingId":"TBA000000000000"}
+	// {"deviceType":"desktop","orderId":"XXX-XXXXXXX-XXXXXXX","shortStatus":"DELIVERED","promise":{"secondaryPromiseIdentifier":"DELIVERED","promiseMessage":"Delivered today"},"packageIndex":"0","themeParameters":"o=XXX-XXXXXXX-XXXXXXX&s=0000000000000&p=0&i=","progressTracker":{"lastTransitionPercentComplete":100,"lastReachedMilestone":"DELIVERED","numberOfReachedMilestones":4},"itemId":"","isMfn":false,"shipmentId":"0000000000000","realm":"USAmazon","visitTrigger":"UNKNOWN","trackingId":"TBA000000000000"}
+	// shortStatus
+	// ORDERED
+	// SHIPPED
+	// IN_TRANSIT
+	// OUT_FOR_DELIVERY
+	// DELIVERED
 	if (aStateJson != {} && aStateJson.promise && aStateJson.promise.promiseMessage) {
 		deliveryStr = aStateJson.promise.promiseMessage;
 Mojo.Log.info("AMZ aState deliveryStr = " + deliveryStr);

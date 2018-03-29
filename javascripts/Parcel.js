@@ -1,6 +1,6 @@
 function Parcel(id, callback) {
 	var depotoptions = {
-		name: "parcelsdepot",
+		name: "ext:parcelsdepot",
 		version: 1,
 		replace: false
 	};
@@ -40,7 +40,7 @@ Parcel.prototype.refresh = function() {
 	service.getDetails();
 };
 
-Parcel.prototype.callbackStatus = function(status) {
+Parcel.prototype.callbackStatus = function(status, force) {
 	var nothingfound = true;
 	for(var i=0; i<PARCELS.length; i++) {
 		if(PARCELS[i].parcelid == this.parcelid) {
@@ -56,7 +56,7 @@ Parcel.prototype.callbackStatus = function(status) {
 	
 	PARCELS[this.id].refreshing = "";
 	
-	if(PARCELS[this.id].status < status) {
+	if(PARCELS[this.id].status < status || force) {
 		PARCELS[this.id].status = status;
 
 		// notify does not check again the id!
@@ -95,7 +95,7 @@ Parcel.prototype.callbackMetadata = function(data) {
 	}
 };
 
-Parcel.prototype.refreshDetails = function(details) {
+Parcel.prototype.refreshDetails = function(details, force) {
 	var nothingfound = true;
 	for(var i=0; i<PARCELS.length; i++) {
 		if(PARCELS[i].parcelid == this.parcelid) {
@@ -110,14 +110,14 @@ Parcel.prototype.refreshDetails = function(details) {
 	}
 		
 	if(NOTIFYSMALLMESSAGE) {
-		if(details.length > PARCELS[this.id].detailsstatus) {
+		if(details.length > PARCELS[this.id].detailsstatus || force) {
 			// notify does not check again the id!
 			this.notify();
 		}
 	}
 	
 	if(NOTIFYSMALLMESSAGE || USECACHE) {
-		if(details.length > PARCELS[this.id].detailsstatus) {
+		if(details.length > PARCELS[this.id].detailsstatus || force) {
 			PARCELS[this.id].detailsstatus = details.length;
 			PARCELS[this.id].detailscached = Object.toJSON(details);
 			this.parcelsDepot.add("parcels", PARCELS, this.dbSuccess, this.dbFailure);
@@ -127,6 +127,8 @@ Parcel.prototype.refreshDetails = function(details) {
 
 Parcel.prototype.refreshError = function(message) {
 	Mojo.Log.error(message);
+
+	this.callbackStatus(0); // We are not going to "force" this, as it may be temporary
 };
 
 Parcel.prototype.notify = function() {
@@ -219,4 +221,5 @@ Parcel.prototype.dbSuccess = function(event) {
 }
 
 Parcel.prototype.dbFailure = function(event) {
+Mojo.Log.info("dbFailure " + JSON.stringify(event));
 }

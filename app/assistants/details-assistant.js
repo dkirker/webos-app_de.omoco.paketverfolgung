@@ -11,7 +11,7 @@ function DetailsAssistant(parcelid) {
 
 DetailsAssistant.prototype.setup = function() {
 	var depotoptions = {
-		name: "parcelsdepot",
+		name: "ext:parcelsdepot",
 		version: 1,
 		replace: false
 	};
@@ -139,10 +139,10 @@ DetailsAssistant.prototype.openTrackingSite = function() {
 	this.controller.serviceRequest("palm://com.palm.applicationManager", {
 		method: "open",
 		parameters:  {
-			id: 'com.palm.app.browser',
-			params: {
+			//id: 'com.palm.app.browser',
+			//params: {
 				target: this.trackingUrl
-			}
+			//}
 		}
 	});
 }
@@ -382,8 +382,8 @@ DetailsAssistant.prototype.dbSuccess = function(event) {
 DetailsAssistant.prototype.dbFailure = function(event) {
 }
 
-DetailsAssistant.prototype.callbackStatus = function(status) {
-	if(PARCELS[this.id].status < status) {
+DetailsAssistant.prototype.callbackStatus = function(status, force) {
+	if(PARCELS[this.id].status < status || force) {
 		PARCELS[this.id].status = status;
 
 		this.notify();
@@ -446,10 +446,10 @@ DetailsAssistant.prototype.callbackMetadata = function(data) {
         PARCELS[this.id].deliverydate = data.delivery;
         dataupdated = true;
     }
-    if (data.serviceclass) {
-        PARCELS[this.id].serviceclass = data.serviceclass;
-        dataupdated = true;
-    }
+	if (data.serviceclass) {
+		PARCELS[this.id].serviceclass = data.serviceclass;
+		dataupdated = true;
+	}
 
     if (dataupdated) {
         this.parcelsDepot.add("parcels", PARCELS, this.dbSuccess, this.dbFailure);
@@ -457,18 +457,18 @@ DetailsAssistant.prototype.callbackMetadata = function(data) {
     }
 };
 
-DetailsAssistant.prototype.refreshDetails = function(details) {
+DetailsAssistant.prototype.refreshDetails = function(details, force) {
 	detailsListModel.items = details;
 	this.controller.modelChanged(detailsListModel);
 	
 	if(NOTIFYSMALLMESSAGE) {
-		if(details.length > PARCELS[this.id].detailsstatus) {
+		if(details.length > PARCELS[this.id].detailsstatus || force) {
 			this.notify();
 		}
 	}
 	
 	if(NOTIFYSMALLMESSAGE || USECACHE) {
-		if(details.length > PARCELS[this.id].detailsstatus) {
+		if(details.length > PARCELS[this.id].detailsstatus || force) {
 			PARCELS[this.id].detailsstatus = details.length;
 			PARCELS[this.id].detailscached = Object.toJSON(details);
 			this.parcelsDepot.add("parcels", PARCELS, this.dbSuccess, this.dbFailure);
@@ -491,6 +491,8 @@ DetailsAssistant.prototype.refreshDetails = function(details) {
 
 DetailsAssistant.prototype.refreshError = function(message) {
 	Mojo.Log.error(message);
+
+	this.callbackStatus(0); // We are not going to "force" this, as it may be temporary
 };
 
 DetailsAssistant.prototype.notify = function() {
@@ -506,9 +508,9 @@ DetailsAssistant.prototype.notify = function() {
         $L("<tr><td><b>Service:</b></td><td>") + PARCELS[this.id].servicename + "</td></tr>" +
         $L("<tr><td><b>Created:</b></td><td>") + PARCELS[this.id].timecreatedstring + "</td></tr>" +
         $L("<tr><td><b>Update:</b></td><td>") + PARCELS[this.id].lastmodifiedstring + "</td></tr>";
-	if (PARCELS[this.id].serviceclass) {
-		detailsHtml += $L("<tr><td colspan=2><b>Service Class:</b></td></tr><tr><td colspan=2>") + PARCELS[this.id].serviceclass + "</td></tr>";
-	}
+    if (PARCELS[this.id].serviceclass) {
+        detailsHtml += $L("<tr><td colspan=2><b>Service Class:</b></td></tr><tr><td colspan=2>") + PARCELS[this.id].serviceclass + "</td></tr>";
+    }
 	if (PARCELS[this.id].deliverydate) {
 		detailsHtml += $L("<tr><td colspan=2><b>Expected Delivery:</b></td></tr><tr><td colspan=2>") + PARCELS[this.id].deliverydate + "</td></tr>";
 	}

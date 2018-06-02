@@ -42,16 +42,25 @@ Mojo.Log.info("responseText: " +responseText);
 	//var responseText2 = responseText.split("<tbody class=\"details\">")[1];
 	var statusFrag = responseText.split("<div class=\"package-note");//[1].split("</div>")[0];
 	var statusText = "";
-Mojo.Log.info("statusFrag: " + statusFrag);
+	var statusSubText = "";
+
 	if (statusFrag.length > 1) {
 		statusFrag = statusFrag[1].split("</div>")[0];
-Mojo.Log.info("statusFrag: " + statusFrag);
+Mojo.Log.info("statusFrag[1]: " + statusFrag);
+	} else {
+		statusFrag = statusFrag[0];
+Mojo.Log.info("statusFrag[0]: " + statusFrag);
 	}
+
 	if (statusFrag.indexOf("<h3>") != -1) {
 		statusText = statusFrag.split("<h3>")[1].split("</h3>")[0].replace(/\:/g, " ").trim();
 	}
+	// TODO: There was a reason for this, so need to handle better; might have been for alert or delivery attempt
 	if (statusFrag.indexOf("<span>") != -1) {
-		statusText += statusFrag.split("<span>")[1].split("</span>")[0].replace(/\:/g, " ").trim();
+		statusSubText = statusFrag.split("<span>")[1].split("</span>")[0].replace(/\:/g, " ").trim();
+	}
+	if (statusText == "") {
+		statusText = statusSubText;
 	}
 Mojo.Log.info("statusText: " +statusText);
 	// Real USPS statuses:
@@ -66,6 +75,7 @@ Mojo.Log.info("statusText: " +statusText);
 	// in-transit + special: 4 (out for delivery)
 	// delivered: 5
 	// alert: 3 (for now)
+	// status not available: 0
 	// error: 0
 	// not trackable: 0
 	// seized: 0
@@ -97,7 +107,7 @@ Mojo.Log.info("statusText: " +statusText);
 		status = 0;
 	}
 
-	this.callbackStatus(status);
+	this.callbackStatus(status, true);
 
     // <div class="package-note">
     //  <h3>Expected Delivery Day:</h3>
@@ -183,6 +193,7 @@ Mojo.Log.info("tmpDateStr: " + tmpDateStr);
 Mojo.Log.info("tmpLoc: " + tmpLoc);
 Mojo.Log.info("tmpNotes: " +tmpNotes);
 
+			if (i == 1) {
 				if (tmpNotes.toLowerCase().indexOf("out for delivery") != -1) {
 					status = 4;
 					this.callbackStatus(status);
@@ -190,6 +201,7 @@ Mojo.Log.info("tmpNotes: " +tmpNotes);
 					status = 0;
 					this.callbackStatus(status);
 				}
+			}
 			details.push({date: tmpDateStr, location: tmpLoc, notes: tmpNotes});
 		}
 
@@ -218,7 +230,7 @@ Mojo.Log.info("detailFrag: " + detailFrag);
 	} else {
 		var useDefaultErrorHandling = true;
 		var errorText = "";
-		if (statusText.toLowerCase().indexOf("not trackable") != -1) {
+		if (statusText.toLowerCase().indexOf("not trackable") != -1 || statusText.toLowerCase().indexOf("status not available") != -1) {
 Mojo.Log.info("Got Not Trackable");
 			var notes = responseText.split("<div class=\"package-note");
 			if (notes.length > 2) { // There should be [{block before statusText},{statusText},{errorFrag}]

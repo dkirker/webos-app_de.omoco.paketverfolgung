@@ -6,7 +6,7 @@ UPS.prototype.getAuthor = function() {
 }
 
 UPS.prototype.getVersion = function() {
-	return "1.3.1";
+	return "1.4.0";
 }
 
 UPS.prototype.getColor = function() {
@@ -22,236 +22,114 @@ UPS.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetad
 };
 
 UPS.prototype.getTrackingUrl = function() {
-	return this.getTrackingUrlMobile();
-};
-
-UPS.prototype.getTrackingUrlDesktop = function() {
+	var locale = "en_US";
 	if(LANG == "de")
-		return "http://wwwapps.ups.com/WebTracking/track?HTMLVersion=5.0&loc=de_DE&trackNums=" + this.id + "&track.y=10&Requester=TRK_MOD&showMultipiece=N&detailNumber=undefined&WBPM_lid=homepage%2Fct1.html_pnl_trk";
-	return "http://wwwapps.ups.com/WebTracking/track?HTMLVersion=5.0&loc=en_US&trackNums=" + this.id + "&track.y=10&Requester=TRK_MOD&showMultipiece=N&detailNumber=undefined&WBPM_lid=homepage%2Fct1.html_pnl_trk";
-};
-
-UPS.prototype.getTrackingUrlMobile = function() {
-	return "https://m.ups.com/mobile/track?t=t&trackingNumber=" + this.id;
-};
+		locale = "de_DE";
+	return "http://wwwapps.ups.com/WebTracking/track?HTMLVersion=5.0&loc=" + locale + "&trackNums=" + this.id + "&track.y=10&Requester=TRK_MOD&showMultipiece=N&detailNumber=undefined&WBPM_lid=homepage%2Fct1.html_pnl_trk";
+}
 
 UPS.prototype.getDetails = function() {
-	var request = new Ajax.Request(this.getTrackingUrl(), {
-		method: 'get',
+	var locale = "en_US";
+	var data = {"Locale": locale, "TrackingNumber": [this.id]};
+
+	/*
+	if (LANG == "de")
+		locale = "de_DE";
+	*/
+
+	var dataStringified = Object.toJSON(data);
+
+	var request = new Ajax.Request("https://www.ups.com/track/api/Track/GetStatus?loc=" + locale, {
+		method: 'post',
+		contentType: "application/json",
+		postBody: dataStringified,
 		evalJS: 'false',
-		evalJSON: 'false',
+		evalJSON: 'true',
 		onSuccess: this.getDetailsRequestSuccess.bind(this),
 		onFailure: this.getDetailsRequestFailure.bind(this)
 	});
 };
 
-UPS.prototype._escapeChars = { lt: '<', gt: '>', quot: '"', apos: "'", amp: '&' };
-
-UPS.prototype._unescapeHTML = function(str) {//modified from underscore.string and string.js
-    return str.replace(/\&([^;]+);/g, function(entity, entityCode) {
-        var match;
-
-        if (entityCode in this._escapeChars) {
-            return this._escapeChars[entityCode];
-        } else if (match = entityCode.match(/^#x([\da-fA-F]+)$/)) {
-            return String.fromCharCode(parseInt(match[1], 16));
-        } else if (match = entityCode.match(/^#(\d+)$/)) {
-            return String.fromCharCode(~~match[1]);
-        } else {
-            return entity;
-        }
-    }.bind(this));
-};
-
 UPS.prototype.getDetailsRequestSuccess = function(response) {
-	return this.getDetailsRequestSuccessMobile(response);
-};
+	var json = response.responseJSON;
 
-UPS.prototype.getDetailsRequestSuccessMobile = function(response) {
-	var responseText = this._unescapeHTML(response.responseText);
-	//var expectedDelivery = responseText.split("Scheduled Delivery Date:")[1].split("<dd>")[1].split("</dd>")[0];
-
+	if (!json && response.responseText) {
+		json = Mojo.parseJSON(response.responseText);
+	}
+	if (!json || json.statusText != "Successful" ||
+		!json.trackDetails || !json.trackDetails[0]) {
+			this.callbackStatus(-1);
+			return;
+	}
+	var errorCode = json.trackDetails[0].errorCode;
+	var keyStatus = json.trackDetails[0].packageStatus;
 	var status = 0;
-	var newPackageInd = responseText.indexOf("Action Unavailable at This Time");
-	if (newPackageInd != -1) {
-		var statusText = responseText.split("<div class=\"content\">")[1].split("<p class=\"buffer_bottom\">")[1].split("</p>")[0];
-		var dateTodayString = Mojo.Format.formatDate(new Date(), {date: "short", time: "short"});
-		var details = [];
-		
-		details.push({date: dateTodayString, location: "", notes: statusText});
-		
-		this.callbackStatus(0);
-		this.callbackDetails(details.clone());
+
+	if (!keyStatus) {
+		this.callbackStatus(-1);
+		return;
 	} else {
-		var statusText = responseText.split("Package Progress")[1];
-		// TODO: Make this more efficient, use else if
-		if(statusText.split("HERKUNFTSSCAN").length > 1 || statusText.split("Herkunfts Scan").length > 1 ||
-			statusText.split("Auftrag verarbeitet").length > 1 || statusText.split("Origin Scan").length > 1 ||
-			statusText.split("Order Processed").length > 1) {
-			status = 1;
-		}
-		if(statusText.split("ABFAHRTSSCAN").length > 1 || statusText.split("Abfahrts Scan").length > 1 ||
-			statusText.split("Departure Scan").length > 1) {
-			status = 2;
-		}
-		if(statusText.split("ANKUNFTSSCAN").length > 1 || statusText.split("Ankunfts Scan").length > 1 ||
-		   statusText.split("Arrival Scan").length > 1) {
-			status = 3;
-		}
-		if(statusText.split("In Transit").length > 1) {
-			status = 3;
-		}
-		if(statusText.split("WIRD ZUGESTELLT").length > 1 || statusText.split("Wird zugestellt").length > 1 ||
-		   statusText.split("Out For Delivery").length > 1) {
-			status = 4;
-		}
-		if(statusText.split("UPS hat die Sendung zugestellt").length > 1 || statusText.split("UPS has delivered the shipment").length > 1 ||
-		   statusText.split("Delivered").length > 1 || statusText.split("Package picked up at UPS Access Point").length > 1) {
-		    status = 5;
-		}
-		if(statusText.split("1Z9999999999999999").length > 1) {
-			status = -1;
-		}
-
-		this.callbackStatus(status);
-
-		var metadata = {};
-		var deliveryFrag = null;
-		// TODO: I feel like this could be cleaned up to one statement. However, care must be taken to ignore the "Delivered To" section
-		if (responseText.indexOf("Delivery Date") != -1) {
-			deliveryFrag = responseText.split("Delivery Date:</dt>");
-		} else if (responseText.indexOf("Scheduled Delivery:") != -1) {
-			deliveryFrag = responseText.split("Scheduled Delivery:</dt>");
-		} else if (responseText.indexOf("Scheduled Delivery (Updated):") != -1) {
-			deliveryFrag = responseText.split("Scheduled Delivery (Updated):</dt>");
-		} else if (responseText.indexOf("Delivered On:") != -1) {
-			deliveryFrag = responseText.split("Delivered On:</dt>");
-		}
-		if (deliveryFrag && deliveryFrag.length > 1) {
-			var deliveryStr = deliveryFrag[1].split("<dd>")[1].split("</dd>")[0].trim();
-
-			if (deliveryStr.split("Information unavailable").length > 1) {
-				metadata.delivery = $L("Unknown");
-			} else {
-				metadata.delivery = deliveryStr;
-			}
-		}
-
-		var serviceFrag = responseText.split("<dt>Service Level:</dt>");
-		if (serviceFrag.length > 1) {
-			var serviceStr = serviceFrag[1].split("<dd>")[1].split("</dd>")[0].trim();
-
-			if (serviceStr) {
-		    metadata.serviceclass = serviceStr;
-		}
-		}
-
-		if (metadata != {}) {
-			this.callbackMetadata(metadata);
-		}
+		keyStatus = keyStatus.toLowerCase();
 	}
 
-    if(status > 0) {
-        var details = [];
-        var details2 = responseText.split("Package Progress")[1].split("<ul>");
-        for (var i = 1; i < details2.length; i++) {
-			var scanEntry = details2[i].split("</ul>")[0];
-			var scanParts = scanEntry.split("<li>");
-			var tmpLoc = "";
-			var tmpDate = "";
-			var tmpNotes = "";
-
-/*
-		<ul>	
-        	
-            	<li><strong>Omaha&#44;&#32;NE&#44;&#32;US</strong></li>
-            
-        	<li>11&#x2f;21&#x2f;2015 4&#x3a;17&#32;A&#46;M&#46;</li>
-            <li>Departure&#32;Scan</li>
-        </ul>
-
-	
-		<ul>	
-        	
-        	<li>11&#x2f;21&#x2f;2015 12&#x3a;38&#32;A&#46;M&#46;</li>
-            <li>Arrival&#32;Scan</li>
-        </ul>
-*/
-
-			if (scanParts.length === 3) { // Location from previous scan
-				tmpDate = scanParts[1].split("</li>")[0];
-				tmpNotes = scanParts[2].split("</li>")[0];
-				if (i > 1) {
-					tmpLoc = details[i-2].location;
-				}
-			} else if (scanParts.length === 4) { // New location
-				tmpLoc = scanParts[1].split("<strong>")[1].split("</strong>")[0];
-				tmpDate = scanParts[2].split("</li>")[0];
-				tmpNotes = scanParts[3].split("</li>")[0];
-			}
-            details.push({date: tmpDate, location: tmpLoc, notes: tmpNotes});
-        }
-
-        this.callbackDetails(details.clone());
-    }
-};
-
-UPS.prototype.getDetailsRequestSuccessDesktop = function(response) {
-	var responseText = response.responseText;
-
-	var statusText = responseText.split("Shipment Progress")[1];
-Mojo.Log.error("statusText " + statusText);
-	var status = 0;
-	if(statusText.split("HERKUNFTSSCAN").length > 1 || statusText.split("Herkunfts Scan").length > 1 ||
-	   statusText.split("Auftrag verarbeitet").length > 1 || statusText.split("Origin Scan").length > 1 ||
-	   statusText.split("Order Processed").length > 1) {
+	Mojo.Log.info("UPS errorCode: ", errorCode, "keyStatus: ", keyStatus);
+Mojo.Log.info("UPS JSON: ", response.responseText);
+	// TODO: I am only certain on statuses from the scan history
+	if (errorCode != null) {
+		status = -1;
+	} else if (keyStatus.indexOf("initiated") != -1 || keyStatus.indexOf("label created") != -1 ||
+			   keyStatus.indexOf("order processed") != -1) {
 		status = 1;
-	}
-	if(statusText.split("ABFAHRTSSCAN").length > 1 || statusText.split("Abfahrts Scan").length > 1 ||
-	   statusText.split("Departure Scan").length > 1) {
+	} else if (keyStatus.indexOf("pickup") != -1 || keyStatus.indexOf("picked") != -1) {
 		status = 2;
-	}
-	if(statusText.split("ANKUNFTSSCAN").length > 1 || statusText.split("Ankunfts Scan").length > 1 ||
-	   statusText.split("Arrival Scan").length > 1) {
+	} else if (keyStatus.indexOf("destination scan") != -1 || keyStatus.indexOf("arrival scan") != -1 ||
+			   keyStatus.indexOf("departure scan") != -1 || keyStatus.indexOf("origin scan") != -1) {
 		status = 3;
-	}
-	if(statusText.split("WIRD ZUGESTELLT").length > 1 || statusText.split("Wird zugestellt").length > 1 ||
-	   statusText.split("Out For Delivery").length > 1) {
+	} else if (keyStatus.indexOf("delivery") != -1 || keyStatus.indexOf("exception") != -1) { // Exceptions can happen anywhere, and this shouldn't be indicitive of "out for delivery"
 		status = 4;
-	}
-	if(statusText.split("UPS hat die Sendung zugestellt").length > 1 || statusText.split("UPS has delivered the shipment").length > 1 ||
-	   statusText.split("Package picked up at UPS Access Point").length > 1) {
+	} else if (keyStatus.indexOf("delivered") != -1) {
 		status = 5;
 	}
-	if(statusText.split("1Z9999999999999999").length > 1) {
-		status = -1;
+
+	var metadata = {};
+	if (status == 5) {
+		metadata.delivery = json.trackDetails[0].deliveredDate + " " + json.trackDetails[0].deliveredTime + ", at " + json.trackDetails[0].leftAt;
+	} else if (json.trackDetails[0].scheduledDeliveryDate != "" && json.trackDetails[0].scheduledDeliveryTime != "") {
+		metadata.delivery = json.trackDetails[0].scheduledDeliveryDate + " " + json.trackDetails[0].scheduledDeliveryTime;
 	}
-Mojo.Log.error("status " + status);
+Mojo.Log.info("UPS delivery by: " +  metadata.delivery);
+	if (json.trackDetails[0].additionalInformation && json.trackDetails[0].additionalInformation.serviceInformation &&
+		json.trackDetails[0].additionalInformation.serviceInformation.serviceName != "") {
+		metadata.serviceclass = json.trackDetails[0].additionalInformation.serviceInformation.serviceName;
+	}
+Mojo.Log.info("UPS serviceClass: " + metadata.serviceclass);
+
+	if (metadata != {}) {
+		this.callbackMetadata(metadata);
+	}
+
+	var details = [];
+	if (status > 0) {
+		var detailsVar = json.trackDetails[0].shipmentProgressActivities;
+Mojo.Log.info("UPS scans: " + detailsVar.length);
+		for (var i = 0; i < detailsVar.length; i++) {
+			var tmpDate = detailsVar[i].date + " " + detailsVar[i].time; // + " " + detailsVar[i].gmtOffset;
+			Mojo.Log.info("UPS date: ", tmpDate, " location: ", detailsVar[i].location, " notes: ", detailsVar[i].activityScan);
+			details.push({date: tmpDate, location: detailsVar[i].location, notes: detailsVar[i].activityScan});
+		}
+	}
 
 	this.callbackStatus(status);
 
-	if(status > 0) {
-		var details = [];
-		var details2 = responseText.split("<td class=\"nowrap\">");
-Mojo.Log.error("details2 " + details2);
-		for (var i=1; i<details2.length; i+=3) {
-Mojo.Log.error("details2[i] " + details2[i] + " details2[i+1] " + details2[i+1] + " details2[i+2] " + details2[i+2]);
-			var tmpLoc = details2[i].split("</td>")[0];
-			var tmpDate1 = details2[i+1].split("</td>")[0];
-			var tmpDate2 = details2[i+2].split("</td>")[0];
-			var tmpDate = tmpDate1 + " " + tmpDate2;
-			var tmpNotes = details2[i+2].split("<td>")[1];
-			tmpNotes = tmpNotes.split("</td>")[0];
-			details.push({date: tmpDate, location: tmpLoc, notes: tmpNotes});
-		}
-		
-		this.callbackDetails(details.clone());	
+	if (details.length > 0) {
+		this.callbackDetails(details.clone());
 	}
 };
 
 UPS.prototype.getDetailsRequestFailure = function(response) {
-	this.callbackError($L("Could not connect to the remote server."));
+	Mojo.Log.info("UPS Status: ", response.statusText, " Response: ", response.responseText, " Headers: ", Object.toJSON(response.headerJSON), "Response JSON: ", Object.toJSON(response.responseJSON));
+
+	this.callbackError($L("There was an error")/*"Konnte Seite nicht laden."*/);
 };
 
 registerService("UPS", new UPS());
-

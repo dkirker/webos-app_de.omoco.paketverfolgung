@@ -20,6 +20,18 @@ function getNDUIDServiceRequestHandler(resp) {
 	getNDUIDServiceRequestHandlerCallback(mynduid);
 }
 
+function safeParseJSON(jsonText, isArray) {
+	var returnData = (isArray) ? [] : {};
+
+	try {
+		returnData = Mojo.parseJSON(jsonText);
+	} catch (e) {
+
+	}
+
+	return returnData;
+}
+
 function loadScript(src) {
     var head = document.getElementsByTagName('head')[0];
     var script = document.createElement('script');

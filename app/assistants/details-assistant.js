@@ -386,7 +386,9 @@ DetailsAssistant.prototype.callbackStatus = function(status, force) {
 	if(PARCELS[this.id].status < status || force) {
 		PARCELS[this.id].status = status;
 
-		this.notify();
+		if (!force) {
+			this.notify();
+		}
 	} else if(PARCELS[this.id].status > status) {
 		this.controller.get('warning').show();
 	}
@@ -463,7 +465,31 @@ DetailsAssistant.prototype.refreshDetails = function(details, force) {
 	
 	if(NOTIFYSMALLMESSAGE) {
 		if(details.length > PARCELS[this.id].detailsstatus || force) {
-			this.notify();
+			var shouldNotify = true;
+
+			if (USECACHE) {
+				var jsonData = safeParseJSON(PARCELS[this.id].detailscached);
+
+				// Do not notify if message is the same as stored
+				if (details.length == jsonData.length) {
+					var diffNotes = 0;
+
+					for (var i = 0; i < details.length; i++) {
+						if (details[i].notes && jsonData[i].notes &&
+							details[i].notes.strip() != jsonData[i].notes.strip()) {
+							diffNotes++;
+						}
+					}
+
+					if (!diffNotes)
+						shouldNotify = false;
+				}
+			}
+
+			if (shouldNotify) {
+				// notify does not check again the id!
+				this.notify();
+			}
 		}
 	}
 	

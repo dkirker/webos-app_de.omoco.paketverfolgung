@@ -13,6 +13,7 @@ DEFAULTSERVICESSRC = [
 	{name: "Hongkong Post",     src: "services/hongkongpost.js",    active: true,    beta: true},
 	{name: "Itella",            src: "services/itella.js",          active: true,    beta: true},
 	{name: "OnTrac",            src: "services/ontrac.js",          active: true,    beta: true},
+	{name: "Papa John's",       src: "services/papajohns.js",       active: true,    beta: true},
 	{name: "Post.at",           src: "services/post_at.js",         active: true,    beta: false},
 	{name: "Post.ch",           src: "services/post_ch.js",         active: true,    beta: false},
 	{name: "Posti.fi",          src: "services/posti_fi.js",        active: true,    beta: true},

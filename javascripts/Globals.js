@@ -17,6 +17,7 @@ DEFAULTSERVICESSRC = [
 	{name: "Post.ch",           src: "services/post_ch.js",         active: true,    beta: false},
 	{name: "Posti.fi",          src: "services/posti_fi.js",        active: true,    beta: true},
 	{name: "Speedpost",         src: "services/speedpost.js",       active: true,    beta: true},
+	{name: "SunYou",            src: "services/sunyou.js",          active: true,    beta: true},
 	{name: "TNT",               src: "services/tnt.js",             active: true,    beta: false},
 	{name: "UPS",               src: "services/ups.js",             active: true,    beta: false},
 	{name: "USPS",              src: "services/usps.js",            active: true,    beta: false},

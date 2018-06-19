@@ -6,7 +6,7 @@ UPS.prototype.getAuthor = function() {
 }
 
 UPS.prototype.getVersion = function() {
-	return "1.4.0";
+	return "1.4.1";
 }
 
 UPS.prototype.getColor = function() {
@@ -50,52 +50,80 @@ UPS.prototype.getDetails = function() {
 	});
 };
 
+UPS.prototype.lookupToken = function(input) {
+	var dictionary = {
+			"cms.stapp.eod": $L("End of Day"),
+			"cms.stapp.mon": $L("Monday"),
+			"cms.stapp.tue": $L("Tuesday"),
+			"cms.stapp.wed": $L("Wednesday"),
+			"cms.stapp.thu": $L("Thursday"),
+			"cms.stapp.fri": $L("Friday"),
+			"cms.stapp.sat": $L("Saturday"),
+			"cms.stapp.sun": $L("Sunday"),
+			"cms.stapp.delivery": $L("Delivered"),
+		};
+	var result = input;
+
+	if (dictionary[input]) {
+		result = dictionary[input];
+	}
+
+	return result;
+};
+
 UPS.prototype.getDetailsRequestSuccess = function(response) {
 	var json = response.responseJSON;
 
 	if (!json && response.responseText) {
 		json = Mojo.parseJSON(response.responseText);
 	}
+	// statusText:
+	//   "Successful" - ok (statusCode: 200)
+	//   "FAIL" - error (statusCode: 299)
 	if (!json || json.statusText != "Successful" ||
 		!json.trackDetails || !json.trackDetails[0]) {
 			this.callbackStatus(-1);
 			return;
 	}
 	var errorCode = json.trackDetails[0].errorCode;
-	var keyStatus = json.trackDetails[0].packageStatus;
+	var packageStatus = json.trackDetails[0].packageStatus;
 	var status = 0;
 
-	if (!keyStatus) {
+	if (!packageStatus) {
 		this.callbackStatus(-1);
 		return;
 	} else {
-		keyStatus = keyStatus.toLowerCase();
+		packageStatus = packageStatus.toLowerCase();
 	}
 
-	Mojo.Log.info("UPS errorCode: ", errorCode, "keyStatus: ", keyStatus);
+	Mojo.Log.info("UPS errorCode: ", errorCode, " packageStatus: ", packageStatus);
 Mojo.Log.info("UPS JSON: ", response.responseText);
 	// TODO: I am only certain on statuses from the scan history
 	if (errorCode != null) {
 		status = -1;
-	} else if (keyStatus.indexOf("initiated") != -1 || keyStatus.indexOf("label created") != -1 ||
-			   keyStatus.indexOf("order processed") != -1) {
+	} else if (packageStatus.indexOf("initiated") != -1 || packageStatus.indexOf("label created") != -1 ||
+			   packageStatus.indexOf("order processed") != -1) {
 		status = 1;
-	} else if (keyStatus.indexOf("pickup") != -1 || keyStatus.indexOf("picked") != -1) {
+	} else if (packageStatus.indexOf("pickup") != -1 || packageStatus.indexOf("picked") != -1) {
 		status = 2;
-	} else if (keyStatus.indexOf("destination scan") != -1 || keyStatus.indexOf("arrival scan") != -1 ||
-			   keyStatus.indexOf("departure scan") != -1 || keyStatus.indexOf("origin scan") != -1) {
+	} else if (packageStatus.indexOf("destination scan") != -1 || packageStatus.indexOf("arrival scan") != -1 ||
+			   packageStatus.indexOf("departure scan") != -1 || packageStatus.indexOf("origin scan") != -1 ||
+			   packageStatus.indexOf("in transit") != -1) {
 		status = 3;
-	} else if (keyStatus.indexOf("delivery") != -1 || keyStatus.indexOf("exception") != -1) { // Exceptions can happen anywhere, and this shouldn't be indicitive of "out for delivery"
+	} else if (packageStatus.indexOf("delivery") != -1 || packageStatus.indexOf("exception") != -1) { // Exceptions can happen anywhere, and this shouldn't be indicitive of "out for delivery"
 		status = 4;
-	} else if (keyStatus.indexOf("delivered") != -1) {
+	} else if (packageStatus.indexOf("delivered") != -1) {
 		status = 5;
 	}
 
 	var metadata = {};
 	if (status == 5) {
 		metadata.delivery = json.trackDetails[0].deliveredDate + " " + json.trackDetails[0].deliveredTime + ", at " + json.trackDetails[0].leftAt;
+		if (json.trackDetails[0].receivedBy != "") {
+			metadata.delivery += " (Signed by: " + json.trackDetails[0].receivedBy + ")";
+		}
 	} else if (json.trackDetails[0].scheduledDeliveryDate != "" && json.trackDetails[0].scheduledDeliveryTime != "") {
-		metadata.delivery = json.trackDetails[0].scheduledDeliveryDate + " " + json.trackDetails[0].scheduledDeliveryTime;
+		metadata.delivery = json.trackDetails[0].scheduledDeliveryDate + " " + this.lookupToken(json.trackDetails[0].scheduledDeliveryTime);
 	}
 Mojo.Log.info("UPS delivery by: " +  metadata.delivery);
 	if (json.trackDetails[0].additionalInformation && json.trackDetails[0].additionalInformation.serviceInformation &&
@@ -113,9 +141,13 @@ Mojo.Log.info("UPS serviceClass: " + metadata.serviceclass);
 		var detailsVar = json.trackDetails[0].shipmentProgressActivities;
 Mojo.Log.info("UPS scans: " + detailsVar.length);
 		for (var i = 0; i < detailsVar.length; i++) {
-			var tmpDate = detailsVar[i].date + " " + detailsVar[i].time; // + " " + detailsVar[i].gmtOffset;
-			Mojo.Log.info("UPS date: ", tmpDate, " location: ", detailsVar[i].location, " notes: ", detailsVar[i].activityScan);
-			details.push({date: tmpDate, location: detailsVar[i].location, notes: detailsVar[i].activityScan});
+			if (detailsVar[i].activityScan) {
+				var tmpDate = detailsVar[i].date + " " + detailsVar[i].time; // + " " + detailsVar[i].gmtOffset;
+				Mojo.Log.info("UPS date: ", tmpDate, " location: ", detailsVar[i].location, " notes: ", detailsVar[i].activityScan);
+				details.push({date: tmpDate, location: detailsVar[i].location, notes: detailsVar[i].activityScan});
+			} else {
+				Mojo.Log.info("UPS passing blank activity: " + JSON.stringify(detailsVar[i]));
+			}
 		}
 	}
 

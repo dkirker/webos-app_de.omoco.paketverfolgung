@@ -32,7 +32,7 @@ PapaJohns.prototype._getJsonFromUrl = function(url) {
 PapaJohns.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
 	var trackingUrl = id;
 
-	// https://www.papajohns.com/papa-track?orderType=DELIVERY&storeId=####&orderId=&subId=
+	// https://www.papajohns.com/papa-track?orderType=DELIVERY&storeId=####&orderId=####&subId=XXXX
 	// Make sure string starts with https:// otherwise sanitize
 	if (id.indexOf("https://") != 0) {
 		trackingUrl = "https://" + id;
@@ -53,7 +53,7 @@ PapaJohns.prototype.getTrackingUrl = function() {
 	//this.orderNum = ;
 	//this.subId = ;
 	//return "https://papajohns-api-prod.apigee.net/api/v1/orders/" + this.orderNum + "/status?subId=" + this.subId;
-	// https://www.papajohns.com/papa-track?orderType=DELIVERY&storeId=####&orderId=&subId=
+	// https://www.papajohns.com/papa-track?orderType=DELIVERY&storeId=####&orderId=####&subId=XXXX
 	return this.id;
 }
 
@@ -71,7 +71,7 @@ PapaJohns.prototype.getDetails = function() {
 
 // Making: "In Progress"
 // Baking: "In Oven"
-// Boxing: "Ready" {"subscriptionId":"dXXXX","orderId":"####","storeId":"####","orderStatus":"Ready","estimatedDeliveryTime":"2018-01-28T21:10:36.84-08:00","orderType":"D","estimatedDeliveryTimeHuman":"9:10 pm","estimatedDeliveryMinutes":29,"estimatedDeliveryTimeMin":"2018-01-28T21:05:36.840-08:00","estimatedDeliveryTimeMinHuman":"9:05 pm","estimatedDeliveryMinutesMin":24,"estimatedDeliveryTimeMax":"2018-01-28T21:15:36.840-08:00","estimatedDeliveryTimeMaxHuman":"9:15 pm","estimatedDeliveryMinutesMax":34}
+// Boxing: "Ready" {"subscriptionId":"XXXX","orderId":"####","storeId":"####","orderStatus":"Ready","estimatedDeliveryTime":"2018-01-28T21:10:36.84-08:00","orderType":"D","estimatedDeliveryTimeHuman":"9:10 pm","estimatedDeliveryMinutes":29,"estimatedDeliveryTimeMin":"2018-01-28T21:05:36.840-08:00","estimatedDeliveryTimeMinHuman":"9:05 pm","estimatedDeliveryMinutesMin":24,"estimatedDeliveryTimeMax":"2018-01-28T21:15:36.840-08:00","estimatedDeliveryTimeMaxHuman":"9:15 pm","estimatedDeliveryMinutesMax":34}
 // On Its Way: "Being Completed" {"driverName":"XXXX XXXX","estimatedDeliveryTime":"2018-01-28T21:10:36.84-08:00","orderId":"####","orderStatus":"Being Completed","storeId":"####","subscriptionId":"XXXX","estimatedDeliveryTimeHuman":"9:10 pm","estimatedDeliveryMinutes":16,"estimatedDeliveryTimeMin":"2018-01-28T21:05:36.840-08:00","estimatedDeliveryTimeMinHuman":"9:05 pm","estimatedDeliveryMinutesMin":11,"estimatedDeliveryTimeMax":"2018-01-28T21:15:36.840-08:00","estimatedDeliveryTimeMaxHuman":"9:15 pm","estimatedDeliveryMinutesMax":21,"orderType":"D"}
 // delivered: "Completed" {"estimatedDeliveryTime":"2018-01-28T21:10:36.84-08:00","orderId":"####","orderStatus":"Completed","storeId":"####","subscriptionId":"XXXX","estimatedDeliveryTimeHuman":"9:23 pm","estimatedDeliveryMinutes":0,"estimatedDeliveryTimeMin":"2018-01-28T21:23:20.126-08:00","estimatedDeliveryTimeMinHuman":"9:23 pm","estimatedDeliveryMinutesMin":0,"estimatedDeliveryTimeMax":"2018-01-28T21:28:20.126-08:00","estimatedDeliveryTimeMaxHuman":"9:28 pm","estimatedDeliveryMinutesMax":5,"orderType":"D"}
 
@@ -112,8 +112,16 @@ Mojo.Log.info("PapaJohns status: " + status);
 	if (json.estimatedDeliveryTimeMinHuman && json.estimatedDeliveryTimeMaxHuman) {
 		metadata.delivery = json.estimatedDeliveryTimeMinHuman + " - " + json.estimatedDeliveryTimeMaxHuman;
 	}
-	if (json.driverName && json.orderType == "D") {
-		metadata.serviceclass = "Delivery: " + json.driverName + " (Store: " + json.storeId + ")";
+	if (json.orderType) {
+		if (json.orderType == "D") {
+			if (json.driverName) {
+				metadata.serviceclass = "Delivery: " + json.driverName + " (Store: " + json.storeId + ")";
+			} else {
+				metadata.serviceclass = "Delivery (Store: " + json.storeId + ")";
+			}
+		} else if (json.orderType == "C") {
+			metadata.serviceclass = "Carryout (Store: " + json.storeId + ")";
+		}
 	}
 Mojo.Log.info("PapaJohns delivery: " + metadata.delivery);
 Mojo.Log.info("PapaJohns service: " + metadata.serviceclass);
@@ -125,9 +133,12 @@ Mojo.Log.info("PapaJohns service: " + metadata.serviceclass);
 	var details = [];
 	var dateTodayString = Mojo.Format.formatDate(new Date(), {date: "short", time: "short"});
 
-	var orderStatusStrs = [$L("Error"), $L("Making"), $L("Baking"), $L("Boxing"), $L("On Its Way"), $L("Delivered")];
+	var orderStatusDeliveryStrs = [$L("Error"), $L("Making"), $L("Baking"), $L("Boxing"), $L("On Its Way"), $L("Delivered")];
+	var orderStatusCarryoutStrs = [$L("Error"), $L("Making"), $L("Baking"), $L("Boxing"), $L("Ready"), $L("Picked Up")];
 
-	details.push({date: dateTodayString, location: "", notes: orderStatusStrs[status]});
+	var orderStatusStr = (json.orderType == "D") ? orderStatusDeliveryStrs[status] : orderStatusCarryoutStrs[status];
+
+	details.push({date: dateTodayString, location: "", notes: orderStatusStr});
 	/*if (status > 0) {
 		var detailsVar = json.TrackPackagesResponse.packageList[0].scanEventList;
 		for (var i = 0; i < detailsVar.length; i++) {

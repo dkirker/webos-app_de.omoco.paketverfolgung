@@ -36,9 +36,9 @@ USPS.prototype.getDetails = function() {
 };
 
 USPS.prototype.getDetailsRequestSuccess = function(response) {
-Mojo.Log.info("tracking # " + this.id);
+Mojo.Log.info("USPS tracking # " + this.id);
 	var responseText = response.responseText;
-Mojo.Log.info("responseText: " +responseText);
+Mojo.Log.info("USPS responseText: " +responseText);
 	//var responseText2 = responseText.split("<tbody class=\"details\">")[1];
 	var statusFrag = responseText.split("<div class=\"package-note");//[1].split("</div>")[0];
 	var statusText = "";
@@ -46,10 +46,10 @@ Mojo.Log.info("responseText: " +responseText);
 
 	if (statusFrag.length > 1) {
 		statusFrag = statusFrag[1].split("</div>")[0];
-Mojo.Log.info("statusFrag[1]: " + statusFrag);
+Mojo.Log.info("USPS statusFrag[1]: " + statusFrag);
 	} else {
 		statusFrag = statusFrag[0];
-Mojo.Log.info("statusFrag[0]: " + statusFrag);
+Mojo.Log.info("USPS statusFrag[0]: " + statusFrag);
 	}
 
 	if (statusFrag.indexOf("<h3>") != -1) {
@@ -62,7 +62,7 @@ Mojo.Log.info("statusFrag[0]: " + statusFrag);
 	if (statusText == "") {
 		statusText = statusSubText;
 	}
-Mojo.Log.info("statusText: " +statusText);
+Mojo.Log.info("USPS statusText: " +statusText);
 	// Real USPS statuses:
 	//<div class="progress-indicator">
 	//	<h2 class="hide-fromsighted">in-transit</h2>
@@ -129,7 +129,7 @@ Mojo.Log.info("statusText: " +statusText);
 			spanidx = 1;
 		}
 		deliveryStr = deliveryStr.split("</span>")[spanidx].trim();
-Mojo.Log.info("deliveryStr: " + deliveryStr);
+Mojo.Log.info("USPS deliveryStr: " + deliveryStr);
 		metadata.delivery = deliveryStr;
 	} else if (statusText.toLowerCase().indexOf("delayed") != -1) {
 		metadata.delivery = "Delayed";
@@ -151,7 +151,7 @@ Mojo.Log.info("deliveryStr: " + deliveryStr);
 
 		if (serviceStr != null && serviceStr !== "null") {
 			metadata.serviceclass = serviceStr;
-Mojo.Log.info("serviceStr: " + serviceStr);
+Mojo.Log.info("USPS serviceStr: " + serviceStr);
 		}
 	} else if (responseText.indexOf("dataLayer.push") != -1) {
 		var dataLayerText = responseText.split("dataLayer.push(")[1].split(")")[0];
@@ -171,10 +171,10 @@ Mojo.Log.info("serviceStr: " + serviceStr);
 		var scanHistory = responseText.split("<div class=\"scan-history")[1];
 		var detailsText = scanHistory.split("<div class=\"package-note ui-border-dotted-bottom\">");
 		for (var i = 1; i < detailsText.length; i++) {
-Mojo.Log.info("detailsText[" + i + "]: " + detailsText[i]);
+Mojo.Log.info("USPS detailsText[" + i + "]: " + detailsText[i]);
 			var tmpDateStr = detailsText[i].split("<h3>")[1].split("<br />")[0].replace(/[\r]/g, " ").replace(/[^,: a-zA-Z0-9]/g, "").trim() + " " +
 				detailsText[i].split("<br />")[1].split("</h3>")[0].replace(/[\r]/g, " ").replace(/[^,: a-zA-Z0-9]/g, "").trim();
-Mojo.Log.info("tmpDateStr: " + tmpDateStr);
+Mojo.Log.info("USPS tmpDateStr: " + tmpDateStr);
 			var tmpLoc = "";
 			var tmpNotes = "";
 			/*if (i == 1) {
@@ -190,8 +190,8 @@ Mojo.Log.info("tmpDateStr: " + tmpDateStr);
                 tmpLoc = detailsText[i].split("<br/>")[1].split("</p>")[0].replace(/[\r]/g, " ").replace(/&nbsp;/g, " ").trim();
                 tmpNotes = detailsText[i].split("<p>")[1].split("<br/>")[0].replace(/[\r]/g, " ").replace(/&nbsp;/g, " ").replace(/,/g, " ").trim();
 			//}
-Mojo.Log.info("tmpLoc: " + tmpLoc);
-Mojo.Log.info("tmpNotes: " +tmpNotes);
+Mojo.Log.info("USPS tmpLoc: " + tmpLoc);
+Mojo.Log.info("USPS tmpNotes: " +tmpNotes);
 
 			if (i == 1) {
 				if (tmpNotes.toLowerCase().indexOf("out for delivery") != -1) {
@@ -208,10 +208,10 @@ Mojo.Log.info("tmpNotes: " +tmpNotes);
 		if (detailsText.length == 1) {
 			var detailFrag = responseText.split("<div class=\"package-note");
 			var detailText = "";
-Mojo.Log.info("detailFrag: " + detailFrag);
+Mojo.Log.info("USPS detailFrag: " + detailFrag);
 			if (detailFrag.length > 2) { // First one was package status
 				detailFrag = detailFrag[2].split("</div>")[0];
-Mojo.Log.info("detailFrag: " + detailFrag);
+Mojo.Log.info("USPS detailFrag: " + detailFrag);
 				if (detailFrag.indexOf("<span>") != -1) {
 					detailText = detailFrag.split("<span>")[1].split("</span>")[0];
 
@@ -231,33 +231,33 @@ Mojo.Log.info("detailFrag: " + detailFrag);
 		var useDefaultErrorHandling = true;
 		var errorText = "";
 		if (statusText.toLowerCase().indexOf("not trackable") != -1 || statusText.toLowerCase().indexOf("status not available") != -1) {
-Mojo.Log.info("Got Not Trackable");
+Mojo.Log.info("USPS Got Not Trackable");
 			var notes = responseText.split("<div class=\"package-note");
 			if (notes.length > 2) { // There should be [{block before statusText},{statusText},{errorFrag}]
 				useDefaultErrorHandling = false;
 
 				var errorFrag = notes[2].split("<span>");
-Mojo.Log.info("errorFrag: " + (errorFrag.length > 1) ? errorFrag[1] : errorFrag);
+Mojo.Log.info("USPS errorFrag: " + (errorFrag.length > 1) ? errorFrag[1] : errorFrag);
 				if (errorFrag.length > 1) {
 					errorText = errorFrag[1].split("</span>")[0].trim();
 				} else {
 					errorText = errorFrag[0].trim();
 				}
-Mojo.Log.info("errorText: " + errorText);
+Mojo.Log.info("USPS errorText: " + errorText);
 			}
 		}
 		
 		if (useDefaultErrorHandling) {
 			var errorFrag = responseText.split("<section class=\"list-view\">");//[1].split("</section>")[0];
-Mojo.Log.info("errorFrag: " + errorFrag);
+Mojo.Log.info("USPS errorFrag: " + errorFrag);
 			if (errorFrag.length == 1) {
 				errorFrag = responseText.split("<section class=\"content\">");
 			}
-Mojo.Log.info("errorFrag: " + errorFrag);
+Mojo.Log.info("USPS errorFrag: " + errorFrag);
 			if (errorFrag.length > 1) {
 				errorFrag = errorFrag[1].split("</section>")[0];
 			}
-Mojo.Log.info("errorFrag: " + errorFrag);
+Mojo.Log.info("USPS errorFrag: " + errorFrag);
 			var errorParts = errorFrag.split("<p");
 
 			for (var i = 0; i < errorParts.length; i++) {
@@ -270,7 +270,7 @@ Mojo.Log.info("errorFrag: " + errorFrag);
 
 		if (errorText != "") {
 			var dateTodayString = Mojo.Format.formatDate(new Date(), {date: "short", time: "short"});
-//Mojo.Log.info("error: " + errorText);
+//Mojo.Log.info("USPS error: " + errorText);
 			details.push({date: dateTodayString, location: "", notes: errorText});
 			// Force update with "true"
 			this.callbackStatus(0, true);

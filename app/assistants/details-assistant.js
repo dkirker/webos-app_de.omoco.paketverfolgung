@@ -459,7 +459,18 @@ DetailsAssistant.prototype.callbackMetadata = function(data) {
     }
 };
 
-DetailsAssistant.prototype.refreshDetails = function(details, force) {
+DetailsAssistant.prototype.refreshDetails = function(detailsParam, force, additive) {
+	var details = detailsParam;
+
+	if (USECACHE && additive) {
+		var cachedDetails = safeParseJSON(PARCELS[this.id].detailscached);
+
+		if (!(cachedDetails.length && cachedDetails[0].notes == details[0].notes)) {
+			details = details.concat(cachedDetails);
+		} else {
+			details = cachedDetails;
+		}
+	}
 	detailsListModel.items = details;
 	this.controller.modelChanged(detailsListModel);
 	

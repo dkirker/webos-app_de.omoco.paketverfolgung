@@ -97,8 +97,9 @@ Parcel.prototype.callbackMetadata = function(data) {
 	}
 };
 
-Parcel.prototype.refreshDetails = function(details, force) {
+Parcel.prototype.refreshDetails = function(detailsParam, force, additive) {
 	var nothingfound = true;
+	var details = detailsParam;
 	for(var i=0; i<PARCELS.length; i++) {
 		if(PARCELS[i].parcelid == this.parcelid) {
 			this.id = i;
@@ -109,6 +110,16 @@ Parcel.prototype.refreshDetails = function(details, force) {
 	if(nothingfound) {
 		Mojo.Log.warn("Package seems to be deleted during refresh.");
 		return;
+	}
+
+	if (USECACHE && additive) {
+		var cachedDetails = safeParseJSON(PARCELS[this.id].detailscached);
+
+		if (!(cachedDetails.length && cachedDetails[0].notes == details[0].notes)) {
+			details = details.concat(cachedDetails);
+		} else {
+			details = cachedDetails;
+		}
 	}
 		
 	if(NOTIFYSMALLMESSAGE) {

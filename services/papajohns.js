@@ -6,7 +6,7 @@ PapaJohns.prototype.getAuthor = function() {
 }
 
 PapaJohns.prototype.getVersion = function() {
-	return "1.0";
+	return "1.1";
 }
 
 PapaJohns.prototype.getColor = function() {
@@ -116,7 +116,7 @@ Mojo.Log.info("PapaJohns status: " + status);
 		if (json.orderType == "D") {
 			if (json.driverName) {
 				metadata.serviceclass = "Delivery: " + json.driverName + " (Store: " + json.storeId + ")";
-			} else {
+			} else if (status < 5) {
 				metadata.serviceclass = "Delivery (Store: " + json.storeId + ")";
 			}
 		} else if (json.orderType == "C") {

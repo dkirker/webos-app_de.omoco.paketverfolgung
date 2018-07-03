@@ -199,13 +199,21 @@ DetailsAssistant.prototype.loadData = function() {
 		var invertIcons = "";
 		if(DARKTHEME) 
 			invertIcons = "i";
+		var imgBaseDir = "images";
+
+		if (PARCELS[this.id].servicename == "Papa John's")
+			imgBaseDir = "images/papatrack";
+		var isPapaJohnsDelivery = function(id) {
+				return (PARCELS[id].servicename == "Papa John's" &&
+						PARCELS[id].parcelid.toLowerCase().indexOf("delivery") != -1);
+			};
 		
 		var history = "<center><table border=0 cellpadding=0 cellspacing=0><tr>";
-		history = history + "<td align=center><img src='images/status_1_d" + invertIcons + ".png'></td>";
-		history = history + "<td align=center><img src='images/status_2_d" + invertIcons + ".png'></td>";
-		history = history + "<td align=center><img src='images/status_3_d" + invertIcons + ".png'></td>";
-		history = history + "<td align=center><img src='images/status_4_d" + invertIcons + ".png'></td>";
-		history = history + "<td align=center><img src='images/status_5_d" + invertIcons + ".png'></td>";
+		history = history + "<td align=center><img src='" + imgBaseDir + "/status_1_d" + invertIcons + ".png'></td>";
+		history = history + "<td align=center><img src='" + imgBaseDir + "/status_2_d" + invertIcons + ".png'></td>";
+		history = history + "<td align=center><img src='" + imgBaseDir + "/status_3_d" + invertIcons + ".png'></td>";
+		history = history + "<td align=center><img src='" + imgBaseDir + "/status_4_d" + (isPapaJohnsDelivery(this.id) ? "_D" : "") + invertIcons + ".png'></td>";
+		history = history + "<td align=center><img src='" + imgBaseDir + "/status_5_d" + invertIcons + ".png'></td>";
 		history = history + "</tr></table></center>";
 		
 		this.controller.get('history').innerHTML = history;
@@ -405,32 +413,40 @@ DetailsAssistant.prototype.callbackStatus = function(status, force) {
 	if(DARKTHEME)
 		invertIcons = "i";
 
+	var imgBaseDir = "images";
+	if (PARCELS[this.id].servicename == "Papa John's")
+		imgBaseDir = "images/papatrack";
+	var isPapaJohnsDelivery = function(id) {
+			return (PARCELS[id].servicename == "Papa John's" &&
+					PARCELS[id].parcelid.toLowerCase().indexOf("delivery") != -1);
+		};
+
 	var history = "<center><table border=0 cellpadding=0 cellspacing=0><tr>";	
 	if(status >= 0) {
 		if(status >= 1) {
-			history = history + "<td align=center><img src='images/status_1_d" + invertIcons + ".png'></td>";
+			history = history + "<td align=center><img src='" + imgBaseDir + "/status_1_d" + invertIcons + ".png'></td>";
 		} else {
-			history = history + "<td align=center><img src='images/status_1_d2" + invertIcons + ".png'></td>";
+			history = history + "<td align=center><img src='" + imgBaseDir + "/status_1_d2" + invertIcons + ".png'></td>";
 		}
 		if(status >= 2) {
-			history = history + "<td align=center><img src='images/status_2_d" + invertIcons + ".png'></td>";
+			history = history + "<td align=center><img src='" + imgBaseDir + "/status_2_d" + invertIcons + ".png'></td>";
 		} else {
-			history = history + "<td align=center><img src='images/status_2_d2" + invertIcons + ".png'></td>";
+			history = history + "<td align=center><img src='" + imgBaseDir + "/status_2_d2" + invertIcons + ".png'></td>";
 		}
 		if(status >= 3) {
-			history = history + "<td align=center><img src='images/status_3_d" + invertIcons + ".png'></td>";
+			history = history + "<td align=center><img src='" + imgBaseDir + "/status_3_d" + invertIcons + ".png'></td>";
 		} else {
-			history = history + "<td align=center><img src='images/status_3_d2" + invertIcons + ".png'></td>";
+			history = history + "<td align=center><img src='" + imgBaseDir + "/status_3_d2" + invertIcons + ".png'></td>";
 		}
 		if(status >= 4) {
-			history = history + "<td align=center><img src='images/status_4_d" + invertIcons + ".png'></td>";
+			history = history + "<td align=center><img src='" + imgBaseDir + "/status_4_d" + (isPapaJohnsDelivery(this.id) ? "_D" : "") + invertIcons + ".png'></td>";
 		} else {
-			history = history + "<td align=center><img src='images/status_4_d2" + invertIcons + ".png'></td>";
+			history = history + "<td align=center><img src='" + imgBaseDir + "/status_4_d2" + (isPapaJohnsDelivery(this.id) ? "_D" : "") + invertIcons + ".png'></td>";
 		}
 		if(status >= 5) {
-			history = history + "<td align=center><img src='images/status_5_d" + invertIcons + ".png'></td>";
+			history = history + "<td align=center><img src='" + imgBaseDir + "/status_5_d" + invertIcons + ".png'></td>";
 		} else {
-			history = history + "<td align=center><img src='images/status_5_d2" + invertIcons + ".png'></td>";
+			history = history + "<td align=center><img src='" + imgBaseDir + "/status_5_d2" + invertIcons + ".png'></td>";
 		}
 	} else {
 		history = history + "<td align=center width=60><img src='images/status_-1_d" + invertIcons + ".png'></td><td align=center valign=top style=\"font-size:14px;color:red\">Abruf der Details fehlgeschlagen, bitte Sendungsnummer überprüfen!</td>";

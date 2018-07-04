@@ -159,9 +159,11 @@ Mojo.Log.info("PapaJohns service: " + metadata.serviceclass);
 };
 
 PapaJohns.prototype.getDetailsRequestFailure = function(response) {
-	Mojo.Log.info("Status: ", response.statusText, " Response: ", response.responseText, " Headers: ", Object.toJSON(response.headerJSON), "Response JSON: ", Object.toJSON(response.responseJSON));
+	Mojo.Log.info("PapaJohns Status: ", response.statusText, " Response: ", response.responseText,
+				  " Headers: ", Object.toJSON(response.headerJSON),
+				  " Response JSON: ", Object.toJSON(response.responseJSON));
 
-	this.callbackError("Konnte Seite nicht laden.");
+	this.callbackError($L("There was an error."));
 };
 
 registerService("Papa John's", new PapaJohns());

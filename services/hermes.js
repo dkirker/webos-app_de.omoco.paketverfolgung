@@ -2,15 +2,15 @@ function Hermes() {
 }
 
 Hermes.prototype.getAuthor = function() {
-	return "Sebastian Hammerl";
+	return "Donald Kirker, Sebastian Hammerl";
 }
 
 Hermes.prototype.getVersion = function() {
-	return "1.0";
+	return "1.1";
 }
 
 Hermes.prototype.getColor = function() {
-	return "#72bed9";
+	return "#0091cd";
 }
 
 Hermes.prototype.init = function(id, callbackStatus, callbackDetails, callbackMetadata, callbackError) {
@@ -22,80 +22,99 @@ Hermes.prototype.init = function(id, callbackStatus, callbackDetails, callbackMe
 };
 
 Hermes.prototype.getTrackingUrl = function() {
-	return "https://www.myhermes.de/wps/portal/paket/Home/privatkunden/sendungsverfolgung";
+	// TODO: Handle other locales
+	return "https://www.hermesworld.com/en/our-services/distribution/parcel-delivery/parcel-tracking/?trackingNo=" + this.id;
 }
 
 Hermes.prototype.getDetails = function() {
-	var request = new Ajax.Request(this.getTrackingUrl(), {
-		method: 'get',
-		evalJS: 'false',
-		evalJSON: 'false',
-		onSuccess: this.getDetailsRequestSuccess2.bind(this),
+	var request = new Ajax.Request("https://www.hermesworld.com/TrackMyParcel/customersearch.json?trackingNumber=" + this.id, {
+		method: "get",
+		evalJS: "false",
+		evalJSON: "true",
+		onSuccess: this.getDetailsRequestSuccess.bind(this),
 		onFailure: this.getDetailsRequestFailure.bind(this)
 	});
 };
 
-Hermes.prototype.getDetailsRequestSuccess2 = function(response){
-	var url = response.responseText.split("<form id=\"shipmentTracingDTO\" action=\"");
-	url = url[1].split("\" method=\"post\"");
-	url = "https://www.myhermes.de" + url[0];
+// {"parcels":[
+// 		{"barcode":"################","postcode":"XXX  XXX","tracking":[
+// 			{"date":"21/06/2018","time":"17:10","status":"Delivered and signed for","id":"1028"},
+// 			{"date":"21/06/2018","time":"06:19","status":"On its way to the courier","id":"1022"},
+// 			{"date":"20/06/2018","time":"22:12","status":"At the customers local depot","id":"22"},
+// 			{"date":"20/06/2018","time":"22:10","status":"At the customers local depot","id":"27"},
+// 			{"date":"20/06/2018","time":"15:10","status":"At the national sorting hub","id":"28"},
+// 			{"date":"19/06/2018","time":"13:54","status":"Entered the Hermes network","id":"1253"},
+// 			{"date":"18/06/2018","time":"11:37","status":"Collected by the courier","id":"1261"},
+// 			{"date":"18/06/2018","time":"07:28","status":"Collection request received","id":"1328"}
+// 		]}
+// 	]}
 
-	var request = new Ajax.Request(url, {
-		method: 'post',
-		parameters: 'shipmentID=' + this.id,
-		evalJS: 'false',
-		evalJSON: 'false',
-		onSuccess: this.getDetailsRequestSuccessFinal.bind(this),
-		onFailure: this.getDetailsRequestFailure.bind(this)
-	});
-};
+Hermes.prototype.getDetailsRequestSuccess = function(response) {
+	var json = response.responseJSON;
+Mojo.Log.info("Hermes responseJson: " + Object.toJSON(json));
+    Mojo.Log.info("Hermes Status: ", response.statusText, " Response: ", response.responseText,
+                  " Headers: ", Object.toJSON(response.headerJSON),
+                  " Response JSON: ", Object.toJSON(response.responseJSON));
 
-Hermes.prototype.getDetailsRequestSuccessFinal = function(response) {
-	var responseText = response.responseText;
+	if (!json && response.responseText) {
+		json = Mojo.parseJSON(response.responseText);
+	}
+	if (!json || !json.parcels || json.parcels.length == 0 ||
+		!json.parcels[0].tracking || json.parcels[0].tracking.length == 0) {
+			this.callbackStatus(-1);
+			return;
+	}
+Mojo.Log.info("Hermes responseJson: " + Object.toJSON(json));
+
+	var tracking = json.parcels[0].tracking;
 
 	var status = 0;
-	if(responseText.split("shipment_icon_past shipment_icon_handover").length > 1 ||responseText.split("shipment_icon_present shipment_icon_handover").length > 1) {
-		status = 1;
+	var statusText = tracking[0].status;
+
+Mojo.Log.info("Hermes statusText: " + statusText);
+
+	switch (statusText.toLowerCase()) {
+		case "collection request received":
+			status = 1;
+			break;
+		case "collected by the courier":
+			status = 2;
+			break;
+		case "entered the Hermes network":
+		case "at the national sorting hub":
+		case "at the customers local depot":
+			status = 3;
+			break;
+		case "on its way to the courier":
+			status = 4;
+			break;
+		case "delivered":
+		case "delivered and signed for":
+			status = 5;
+			break;
 	}
-	if(responseText.split("shipment_icon_past shipment_icon_base").length > 1 || responseText.split("shipment_icon_present shipment_icon_base").length > 1) {
-		status = 2;
-	}
-	if(responseText.split("shipment_icon_past shipment_icon_chain_store").length > 1 || responseText.split("shipment_icon_present shipment_icon_chain_store").length > 1) {
-		status = 3;
-	}
-	if(responseText.split("shipment_icon_past shipment_icon_delivery").length > 1 || responseText.split("shipment_icon_present shipment_icon_delivery").length > 1) {
-		status = 4;
-	}
-	if(responseText.split("shipment_icon_past shipment_icon_delivered").length > 1 || responseText.split("shipment_icon_present shipment_icon_delivered").length > 1) {
-		status = 5;
-	}
-	if(responseText.split("Zu Ihrer Eingabe konnten leider").length > 1 || responseText.split("Bitte geben Sie eine").length > 1) {
-		status = -1;
+Mojo.Log.info("Hermes status: " + status);
+
+	var details = [];
+	if(status > 0) {
+		for (var i = 0; i < tracking.length; i++) {
+			details.push({date: tracking[i].date + " " + tracking[i].time, location: "", notes: tracking[i].status});
+		}
 	}
 
 	this.callbackStatus(status);
 
-	if(status > 0) {
-		var details = [];
-		var details2 = responseText.split("<table class=\"content_table table_shipmentDetails\">")[1];
-		details2 = details2.split("<tbody>")[1];
-		details2 = details2.split("</tbody>")[0];
-		details2 = details2.split("<tr>");
-		
-		for (var i=1; i<details2.length; i++) {
-			var tmp = details2[i].split("<td>");
-			var tmpDate1 = tmp[1].split("</td>")[0];
-			var tmpDate2 = tmp[2].split("</td>")[0];
-			var tmpNotes = tmp[3].split("</td>")[0];
-			details.push({date: tmpDate1 + " " + tmpDate2, location: "", notes: tmpNotes});
-		}
-		
-		this.callbackDetails(details.clone());	
+	if (details.length > 0) {
+		this.callbackDetails(details.clone());
 	}
 };
 
 Hermes.prototype.getDetailsRequestFailure = function(response) {
-	this.callbackError("Konnte Seite nicht laden.");
+	Mojo.Log.info("Hermes Status: ", response.statusText, " Response: ", response.responseText,
+				  " Headers: ", Object.toJSON(response.headerJSON),
+				  " Response JSON: ", Object.toJSON(response.responseJSON));
+
+	this.callbackError($L("There was an error."));
 };
 
 registerService("Hermes", new Hermes());

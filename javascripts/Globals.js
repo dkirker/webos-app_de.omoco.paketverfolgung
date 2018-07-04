@@ -12,6 +12,7 @@ DEFAULTSERVICESSRC = [
 	{name: "Hermes",            src: "services/hermes.js",          active: true,    beta: false},
 	{name: "Hongkong Post",     src: "services/hongkongpost.js",    active: true,    beta: true},
 	{name: "Itella",            src: "services/itella.js",          active: true,    beta: true},
+	{name: "Landmark Global",   src: "services/landmarkglobal.js",  active: true,    beta: true},
 	{name: "OnTrac",            src: "services/ontrac.js",          active: true,    beta: true},
 	{name: "Papa John's",       src: "services/papajohns.js",       active: true,    beta: true},
 	{name: "Post.at",           src: "services/post_at.js",         active: true,    beta: false},

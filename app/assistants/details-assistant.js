@@ -479,7 +479,7 @@ DetailsAssistant.prototype.refreshDetails = function(detailsParam, force, additi
 	var details = detailsParam;
 
 	if (USECACHE && additive) {
-		var cachedDetails = safeParseJSON(PARCELS[this.id].detailscached);
+		var cachedDetails = safeParseJSON(PARCELS[this.id].detailscached, true);
 
 		if (!(cachedDetails.length && cachedDetails[0].notes == details[0].notes)) {
 			details = details.concat(cachedDetails);
@@ -495,7 +495,7 @@ DetailsAssistant.prototype.refreshDetails = function(detailsParam, force, additi
 			var shouldNotify = true;
 
 			if (USECACHE) {
-				var jsonData = safeParseJSON(PARCELS[this.id].detailscached);
+				var jsonData = safeParseJSON(PARCELS[this.id].detailscached, true);
 
 				// Do not notify if message is the same as stored
 				if (details.length == jsonData.length) {

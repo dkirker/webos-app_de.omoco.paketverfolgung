@@ -21,12 +21,14 @@ function getNDUIDServiceRequestHandler(resp) {
 }
 
 function safeParseJSON(jsonText, isArray) {
-	var returnData = (isArray) ? [] : {};
+	var returnData = isArray ? [] : {};
 
 	try {
-		returnData = Mojo.parseJSON(jsonText);
+		if (jsonText.length > 0) {
+			returnData = Mojo.parseJSON(jsonText);
+		}
 	} catch (e) {
-
+		Mojo.Log.error("safeParseJson: Parse failed (" + e + ") defaulting to: " + returnData);
 	}
 
 	return returnData;

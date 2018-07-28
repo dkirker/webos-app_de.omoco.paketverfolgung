@@ -64,6 +64,10 @@ Parcel.prototype.callbackStatus = function(status, force) {
 			this.notify();
 		}
 	}
+	if (PARCELS[this.id].status < 5 && PARCELS[this.id].servicename == "Papa John's") {
+		setNextAlarm(120);
+	}
+
 	
 	this.callback();
 };

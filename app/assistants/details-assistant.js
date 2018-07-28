@@ -400,6 +400,9 @@ DetailsAssistant.prototype.callbackStatus = function(status, force) {
 	} else if(PARCELS[this.id].status > status) {
 		this.controller.get('warning').show();
 	}
+	if (PARCELS[this.id].status < 5 && PARCELS[this.id].servicename == "Papa John's") {
+		setNextAlarm(120);
+	}
 	
 	this.setArrows();
 	

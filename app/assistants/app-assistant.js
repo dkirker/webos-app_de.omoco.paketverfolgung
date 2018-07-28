@@ -29,6 +29,10 @@ AppAssistant.prototype.handleLaunch = function(launchParams) {
 					if(PARCELS[i].status < 5) {
 						var tmpparcel = new Parcel(i, this.refreshCallback.bind(this));
 						tmpparcel.refresh();
+
+						if (PARCELS[i].servicename == "Papa John's") {
+							setNextAlarm(120);
+						}
 					} else {
 						this.parcelscounter--;
 						if(this.parcelscounter == 0) {
@@ -122,7 +126,7 @@ AppAssistant.prototype.getServicesDbSuccess = function(event){
 	}
 	
 	var depotoptions = {
-		name: "parcelsdepot",
+		name: "ext:parcelsdepot",
 		version: 1,
 		replace: false
 	};

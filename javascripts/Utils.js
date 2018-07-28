@@ -58,10 +58,11 @@ function registerService(name, serviceObject) {
 		Mojo.Log.warn("WARNING: SERVICE " + name + " ALREADY PRESENT!");
 }
 
-function setNextAlarm() {
-	var hours = parseInt(AUTOREFRESHINTERVALL / 60 / 60);
-	var minutes = parseInt((AUTOREFRESHINTERVALL - hours * 60 * 60) / 60);
-	var seconds = AUTOREFRESHINTERVALL - hours * 60 * 60 - minutes * 60;
+function setNextAlarm(overrideRefreshInterval) {
+	var autoRefreshInterval = overrideRefreshInterval || AUTOREFRESHINTERVALL;
+	var hours = parseInt(autoRefreshInterval / 60 / 60);
+	var minutes = parseInt((autoRefreshInterval - hours * 60 * 60) / 60);
+	var seconds = autoRefreshInterval - hours * 60 * 60 - minutes * 60;
 	if(hours.toString().length < 2)
 		hours = "0" + hours;
 	if(minutes.toString().length < 2)
@@ -69,7 +70,9 @@ function setNextAlarm() {
 	if(seconds.toString().length < 2)
 		seconds = "0" + seconds;
 	var alarmIn = hours + ":" + minutes + ":" + seconds;
-	
+
+	Mojo.Log.info("Setting next alarm: ", autoRefreshInterval);
+
 	var currentHours = new Date().getHours();
 	if(AUTOREFRESHDAYTIME && currentHours >= 20) {
 		var hoursToSix = 24 - currentHours + 6;

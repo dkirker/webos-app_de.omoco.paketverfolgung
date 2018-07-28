@@ -133,7 +133,7 @@ Mojo.Log.info("PapaJohns service: " + metadata.serviceclass);
 	var details = [];
 	var dateTodayString = Mojo.Format.formatDate(new Date(), {date: "short", time: "short"});
 
-	var orderStatusDeliveryStrs = [$L("Error"), $L("Making"), $L("Baking"), $L("Boxing"), $L("On Its Way"), $L("Delivered")];
+	var orderStatusDeliveryStrs = [$L("Error"), $L("Making"), $L("Baking"), $L("Boxing"), $L("On Its Way - Don't forget a tip!"), $L("Delivered")];
 	var orderStatusCarryoutStrs = [$L("Error"), $L("Making"), $L("Baking"), $L("Boxing"), $L("Ready"), $L("Picked Up")];
 
 	var orderStatusStr = (json.orderType == "D") ? orderStatusDeliveryStrs[status] : orderStatusCarryoutStrs[status];

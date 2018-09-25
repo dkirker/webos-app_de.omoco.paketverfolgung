@@ -88,7 +88,8 @@ Mojo.Log.info("USPS statusText: " +statusText);
 	if (statusText.toLowerCase().indexOf("pre shipment") != -1 ||
 		statusText.toLowerCase().indexOf("pre-shipment") != -1 ||
 		statusText.toLowerCase().indexOf("on its way to usps") != -1 ||
-		statusText.toLowerCase().indexOf("label created") != -1) {
+		statusText.toLowerCase().indexOf("label created") != -1 ||
+		statusText.toLowerCase().indexOf("currently awaiting package") != -1) {
 		status = 1;
 	} else if (statusText.toLowerCase().indexOf("accepted") != -1) {
 		status = 2;
@@ -218,6 +219,7 @@ Mojo.Log.info("USPS detailFrag: " + detailFrag);
 					if (detailText.indexOf("<br/>") != -1) {
 						detailText = detailText.split("<br/>")[0].trim();
 					}
+					detailText = statusText + "<br/><br/>" + detailText;
 
 					var dateTodayString = Mojo.Format.formatDate(new Date(), {date: "short", time: "short"});
 					details.push({date: dateTodayString, location: "", notes: detailText});

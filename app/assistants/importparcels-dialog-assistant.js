@@ -9,7 +9,7 @@ function ImportparcelsDialogAssistant(sceneAssistant, outputdiv, importscriptnam
 
 ImportparcelsDialogAssistant.prototype.setup = function(widget) {
 	var depotoptions = {
-		name: "parcelsdepot",
+		name: "ext:parcelsdepot",
 		version: 1,
 		replace: false
 	};

@@ -8,7 +8,7 @@ MainAssistant.prototype.setup = function() {
 		this.controller.document.body.className = "palm-dark";
 	
 	var depotoptions = {
-		name: "parcelsdepot",
+		name: "ext:parcelsdepot",
 		version: 1,
 		replace: false
 	};

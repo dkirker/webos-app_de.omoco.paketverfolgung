@@ -10,7 +10,7 @@ function DetailsDialogAssistant(sceneAssistant, spinnerTopModel, spinnerModel, i
 
 DetailsDialogAssistant.prototype.setup = function(widget) {
 	var depotoptions = {
-		name: "parcelsdepot",
+		name: "ext:parcelsdepot",
 		version: 1,
 		replace: false
 	};

@@ -292,6 +292,10 @@ DetailsAssistant.prototype.mapRefresh = function(location, locations) {
 	if(this.lastMapLocation != "") {
 		var mapzoom = 10;
 		var mapheight = 110;
+		var mapwidth = 301;
+		var mapkey = "INSERT_GOOGLE_MAPS_API_KEY_HERE";
+		var uiScale = getPlatformUiScale();
+
 		if (this.controller.get('map').name == "zoom1") {
 			mapzoom = MAPZOOM;
 			mapheight = 233;
@@ -300,19 +304,25 @@ DetailsAssistant.prototype.mapRefresh = function(location, locations) {
 			mapzoom = parseInt(MAPZOOM/2);
 			mapheight = 233;
 		}
-		var mapurl = "http://maps.google.com/maps/api/staticmap?center=" + escape(this.lastMapLocation.replace("&nbsp", " ").replace(/ +(?= )/g,'').replace(/[^a-zA-Z 0-9]+/g, '')) + "&zoom=" + mapzoom + "&size=301x" + mapheight + "&maptype=roadmap&sensor=false";
+
+		mapwidth = Math.ceil(mapwidth * uiScale);
+		mapheight = Math.ceil(mapheight * uiScale);
+
+		var mapurl = "http://maps.google.com/maps/api/staticmap?key=" + mapkey + "&center=" + escape(this.lastMapLocation.replace("&nbsp", " ").replace(/ +(?= )/g,'').replace(/[^a-zA-Z 0-9]+/g, '')) + "&zoom=" + mapzoom + "&size=" + mapwidth + "x" + mapheight + "&maptype=roadmap&sensor=false";
 		
 		if (this.controller.get('map').name == "zoom3") {
-			mapurl = "http://maps.google.com/maps/api/staticmap?center=40,0&zoom=0&size=301x233&maptype=roadmap&sensor=false";
+			mapheight = Math.ceil(233 * uiScale);
+			mapurl = "http://maps.google.com/maps/api/staticmap?key=" + mapkey + "&center=40,0&zoom=0&size=" + mapwidth + "x" + mapheight + "&maptype=roadmap&sensor=false";
 		}
 		
 		var maplocations = "";
 		if(this.lastMapLocations != "" && this.controller.get('map').name != "zoom0") {
 			for (var i = 0; i < this.lastMapLocations.length; i++) {
 				var maplabel = "";
-				if((this.lastMapLocations.length-i-1) < 26) {
+				/*if((this.lastMapLocations.length-i-1) < 26) {
 					maplabel = String.fromCharCode(65+(this.lastMapLocations.length-i-1));
-				}
+				}*/
+				maplabel = this.lastMapLocations.length-i;
 				var islocation = "blue";
 				if(this.lastMapLocations[i] == this.lastMapLocation)
 					islocation = "green";
@@ -322,8 +332,11 @@ DetailsAssistant.prototype.mapRefresh = function(location, locations) {
 		
 		mapurl = mapurl + maplocations;
 
-		if(SHOWMAP)
-			this.controller.get('map').style.backgroundImage = "url(" + mapurl + ")";
+		if(SHOWMAP) {
+			var containerHeight = (this.controller.get('map').name == "zoom0") ? 45 : 200;
+			this.controller.get('map').setStyle("width:100%;height:" + containerHeight + "px;border-radius:13px;background-repeat:no-repeat;background-position:0px -20px;padding-top:13px;overflow:hidden;-webkit-background-size:" + (mapwidth / uiScale) + "px " + (mapheight / uiScale) + "px;background-image: url(" + mapurl + ");");
+			//this.controller.get('map').style.backgroundImage = "url(" + mapurl + ")";
+		}
 	}
 }
 

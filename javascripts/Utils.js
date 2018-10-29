@@ -179,3 +179,13 @@ function setPrefsCookie() {
 		importscriptfile: IMPORTSCRIPTFILE
 	});
 }
+
+function getPlatformUiScale() {
+	var scale = 1;
+
+	if (Mojo.Environment.DeviceInfo.screenWidth == 480 || Mojo.Environment.DeviceInfo.screenWidth == 800) {
+		scale = 1.5;
+	}
+
+	return scale;
+}

@@ -196,14 +196,14 @@ Mojo.Log.info("AMZ responseText: " +responseText);
 	}*/
 	// TODO: Parse this better
 	var deliveryFrag = responseText.split("<span id=\"primaryStatus\"");
-	if (responseText.indexOf("Ordered <span class=\"nowrap\"") != -1) {
+	/*if (responseText.indexOf("Ordered <span class=\"nowrap\"") != -1) {
 		status = 1;
 	} else if (deliveryFrag.length > 1 && deliveryFrag[1].split("</span>")[0].indexOf("Delivered <span") != -1) {
 		status = 5;
 	} else { 
 		this.callbackStatus(0);
 	}
-Mojo.Log.info("AMZ status: " +status);
+Mojo.Log.info("AMZ status: " +status);*/
 	// Defer this
 	//this.callbackStatus(status);
 
@@ -232,6 +232,14 @@ Mojo.Log.info("AMZ aState deliveryStr = " + deliveryStr);
 	} else if (deliveryFrag.length > 1) {
 		deliveryStr = deliveryFrag[1].split("<span class=\"nowrap\">")[1].split("</span>")[0].trim();
 	}
+
+	var primaryDeliveryFrag = responseText.split("<span class=\"milestone-primaryMessage");
+	if (primaryDeliveryFrag.length > 4) {
+		var primaryDeliveryStr = primaryDeliveryFrag[4].split("</span>")[0].split(">")[1].trim();
+
+		deliveryStr = primaryDeliveryStr + " - " + deliveryStr;
+	}
+
 	if (deliveryStr != "") {
 		metadata.delivery = deliveryStr;
 	}
@@ -246,6 +254,31 @@ Mojo.Log.info("AMZ deliveryStr: " +deliveryStr);
 		this.callbackMetadata(metadata);
 	}
 
+	// Better handling of status
+	if (aStateJson != {} && aStateJson.shortStatus) {
+		var shortStatus = aStateJson.shortStatus.toLowerCase();
+		var shortStatusMap = {
+				"ordered": 1,
+				"shipped": 2,
+				"in_transit": 3,
+				"out_for_delivery": 4,
+				"delivered": 5
+			};
+Mojo.Log.info("AMZ shortStatus: " + shortStatus);
+
+		if (shortStatusMap.hasOwnProperty(shortStatus)) {
+			status = shortStatusMap[shortStatus];
+		}
+	} else {
+		if (responseText.indexOf("Ordered <span class=\"nowrap\"") != -1) {
+			status = 1;
+		} else if (deliveryFrag.length > 1 && deliveryFrag[1].split("</span>")[0].indexOf("Delivered <span") != -1) {
+			status = 5;
+		} else {
+			this.callbackStatus(0);
+		}
+	}
+Mojo.Log.info("AMZ new status: " + status);
 
 	var details = [];
 	if (status > 0) {

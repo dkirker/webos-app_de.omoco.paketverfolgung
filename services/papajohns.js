@@ -6,7 +6,7 @@ PapaJohns.prototype.getAuthor = function() {
 }
 
 PapaJohns.prototype.getVersion = function() {
-	return "1.1";
+	return "1.2";
 }
 
 PapaJohns.prototype.getColor = function() {
@@ -41,6 +41,10 @@ PapaJohns.prototype.init = function(id, callbackStatus, callbackDetails, callbac
 
 	this.orderNum = params.orderId;
 	this.subId = params.subId;
+	this.orderType = (params.orderType && params.orderType.toLowerCase() == "carryout") ? "C" : "D";
+
+Mojo.Log.info("PapaJohns params=" + JSON.stringify(params));
+Mojo.Log.info("PapaJohns orderType = " + this.orderType);
 
 	this.id = trackingUrl;
 	this.callbackStatus = callbackStatus;
@@ -94,8 +98,8 @@ PapaJohns.prototype.getDetailsRequestSuccess = function(response) {
 		orderStatus = orderStatus.toLowerCase();
 	}
 
-	Mojo.Log.info("orderStatus: ", orderStatus);
-Mojo.Log.info("JSON: ", response.responseText);
+	Mojo.Log.info("PapaJohns orderStatus: ", orderStatus);
+Mojo.Log.info("PapaJohns JSON: ", response.responseText);
 	if (orderStatus.indexOf("in progress") != -1) {
 		status = 1;
 	} else if (orderStatus.indexOf("in oven") != -1) {
@@ -112,14 +116,16 @@ Mojo.Log.info("PapaJohns status: " + status);
 	if (json.estimatedDeliveryTimeMinHuman && json.estimatedDeliveryTimeMaxHuman) {
 		metadata.delivery = json.estimatedDeliveryTimeMinHuman + " - " + json.estimatedDeliveryTimeMaxHuman;
 	}
-	if (json.orderType) {
-		if (json.orderType == "D") {
+
+	var orderType = this.orderType ? this.orderType : json.orderType;
+	if (orderType) {
+		if (orderType == "D") {
 			if (json.driverName) {
 				metadata.serviceclass = "Delivery: " + json.driverName + " (Store: " + json.storeId + ")";
 			} else if (status < 5) {
 				metadata.serviceclass = "Delivery (Store: " + json.storeId + ")";
 			}
-		} else if (json.orderType == "C") {
+		} else if (orderType == "C") {
 			metadata.serviceclass = "Carryout (Store: " + json.storeId + ")";
 		}
 	}
@@ -136,7 +142,7 @@ Mojo.Log.info("PapaJohns service: " + metadata.serviceclass);
 	var orderStatusDeliveryStrs = [$L("Error"), $L("Making"), $L("Baking"), $L("Boxing"), $L("On Its Way - Don't forget a tip!"), $L("Delivered")];
 	var orderStatusCarryoutStrs = [$L("Error"), $L("Making"), $L("Baking"), $L("Boxing"), $L("Ready"), $L("Picked Up")];
 
-	var orderStatusStr = (json.orderType == "D") ? orderStatusDeliveryStrs[status] : orderStatusCarryoutStrs[status];
+	var orderStatusStr = (orderType == "D") ? orderStatusDeliveryStrs[status] : orderStatusCarryoutStrs[status];
 
 	var storeId = "store" + json.storeId;
 Mojo.Log.info("PapaJohns storeId: ", storeId);

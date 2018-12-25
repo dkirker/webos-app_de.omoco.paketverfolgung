@@ -158,8 +158,19 @@ Mojo.Log.info("USPS serviceStr: " + serviceStr);
 		var dataLayerText = responseText.split("dataLayer.push(")[1].split(")")[0];
 		var dataLayer = JSON.parse(dataLayerText); // This could be dangerous!! TODO: Pick a better method?
 
-		if (dataLayer && dataLayer.product && dataLayer.product !== "null")
-			metadata.serviceclass = dataLayer.product;
+		if (dataLayer) {
+			if (dataLayer.product && dataLayer.product !== "null") {
+				metadata.serviceclass = dataLayer.product;
+			} else if (dataLayer.ecommerce &&
+				dataLayer.ecommerce.impressions && dataLayer.ecommerce.impressions.length > 0) {
+				/*if (dataLayer.ecommerce.impressions[0].category.toLowerCase().indexOf("location not available") != -1) {
+					status = 0;
+				}*/
+				if (dataLayer.ecommerce.impressions[0].name && dataLayer.ecommerce.impressions[0].name !== "Product Name Not Available") {
+					metadata.serviceclass = dataLayer.ecommerce.impressions[0].name;
+				}
+			}
+		}
 	}
 
 	if (metadata != {}) {

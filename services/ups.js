@@ -102,7 +102,8 @@ Mojo.Log.info("UPS JSON: ", response.responseText);
 	if (errorCode != null) {
 		status = -1;
 	} else if (packageStatus.indexOf("initiated") != -1 || packageStatus.indexOf("label created") != -1 ||
-			   packageStatus.indexOf("order processed") != -1 || packageStatus.indexOf("shipment ready for ups") != -1) {
+			   packageStatus.indexOf("order processed") != -1 || packageStatus.indexOf("shipment ready for ups") != -1 ||
+			   packageStatus.indexOf("on its way to ups") != -1) {
 		status = 1;
 	} else if (packageStatus.indexOf("pickup") != -1 || packageStatus.indexOf("picked") != -1) {
 		status = 2;

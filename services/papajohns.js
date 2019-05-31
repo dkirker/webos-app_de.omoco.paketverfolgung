@@ -158,7 +158,7 @@ Mojo.Log.info("PapaJohns storeAddress: ", storeAddress);
 			var tmpDate = detailsVar[i].date + " " + detailsVar[i].time + " " + detailsVar[i].gmtOffset;
 			Mojo.Log.info("date: ", tmpDate, " location: ", detailsVar[i].scanLocation, " notes: ", detailsVar[i].status);
 			details.push({date: tmpDate, location: detailsVar[i].scanLocation, notes: detailsVar[i].status});
-			if (detailsVar[i].status.toLowerCase().indexOf("delivery") != -1 && status < 4) {
+			if (status < 4 && detailsVar[i].status.toLowerCase().indexOf("delivery") != -1) {
 				status = 4; // Hack for "Out for delivery"
 			}
 		}

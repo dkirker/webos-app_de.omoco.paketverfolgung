@@ -109,7 +109,8 @@ Mojo.Log.info("UPS JSON: ", response.responseText);
 		status = 2;
 	} else if (packageStatus.indexOf("destination scan") != -1 || packageStatus.indexOf("arrival scan") != -1 ||
 			   packageStatus.indexOf("departure scan") != -1 || packageStatus.indexOf("origin scan") != -1 ||
-			   packageStatus.indexOf("in transit") != -1) {
+			   packageStatus.indexOf("in transit") != -1 || //packageStatus.indexOf("severe weather delay") != -1) { // Severe Weather Delay should not assume state of 3?
+			   packageStatus.indexOf("delay") != -1) { // Delay should not assume state of 3?
 		status = 3;
 	} else if (packageStatus.indexOf("delivery") != -1 || packageStatus.indexOf("exception") != -1) { // Exceptions can happen anywhere, and this shouldn't be indicitive of "out for delivery"
 		status = 4;
@@ -123,10 +124,19 @@ Mojo.Log.info("UPS JSON: ", response.responseText);
 		if (json.trackDetails[0].receivedBy != "") {
 			metadata.delivery += " (Signed by: " + json.trackDetails[0].receivedBy + ")";
 		}
-	} else if (json.trackDetails[0].scheduledDeliveryDate != "" && json.trackDetails[0].scheduledDeliveryTime != "") {
-		metadata.delivery = json.trackDetails[0].scheduledDeliveryDate + " " + this.lookupToken(json.trackDetails[0].scheduledDeliveryTime);
+	} else if (json.trackDetails[0].scheduledDeliveryDate !== null && json.trackDetails[0].scheduledDeliveryDate !== undefined) {
+		metadata.delivery = json.trackDetails[0].scheduledDeliveryDate;
+Mojo.Log.info("UPS scheduledDeliveryDate: " + metadata.delivery);
+		if (json.trackDetails[0].scheduledDeliveryTime !== null) {
+			metadata.delivery += " " + this.lookupToken(json.trackDetails[0].scheduledDeliveryTime);
+		}
+Mojo.Log.info("UPS scheduledDeliveryDate+scheduledDeliveryTime: " + metadata.delivery);
+	}
+	if (!metadata.delivery && packageStatus.indexOf("delay") != -1) {
+		metadata.delivery = $L("Delayed");
 	}
 Mojo.Log.info("UPS delivery by: " +  metadata.delivery);
+
 	if (json.trackDetails[0].additionalInformation && json.trackDetails[0].additionalInformation.serviceInformation &&
 		json.trackDetails[0].additionalInformation.serviceInformation.serviceName != "") {
 		metadata.serviceclass = json.trackDetails[0].additionalInformation.serviceInformation.serviceName;
@@ -134,6 +144,7 @@ Mojo.Log.info("UPS delivery by: " +  metadata.delivery);
 Mojo.Log.info("UPS serviceClass: " + metadata.serviceclass);
 
 	if (metadata != {}) {
+Mojo.Log.info("UPS callbackMetadata: ", metadata);
 		this.callbackMetadata(metadata);
 	}
 
@@ -146,11 +157,90 @@ Mojo.Log.info("UPS scans: " + detailsVar.length);
 				var tmpDate = detailsVar[i].date + " " + detailsVar[i].time; // + " " + detailsVar[i].gmtOffset;
 				Mojo.Log.info("UPS date: ", tmpDate, " location: ", detailsVar[i].location, " notes: ", detailsVar[i].activityScan);
 				details.push({date: tmpDate, location: detailsVar[i].location, notes: detailsVar[i].activityScan});
+
+				if (status < 4 && detailsVar[i].activityScan.toLowerCase().indexOf("package out for post office delivery") != -1) {
+					status = 4;
+				}
 			} else {
 				Mojo.Log.info("UPS passing blank activity: " + JSON.stringify(detailsVar[i]));
 			}
 		}
 	}
+
+	/*
+	var delayUpdate = false;
+
+	if (json.trackDetails[0].additionalInformation && json.trackDetails[0].additionalInformation.postalServiceTrackingID &&
+		json.trackDetails[0].additionalInformation.postalServiceTrackingID != "") {
+			if (metadata.serviceclass && metadata.serviceclass.toLowerCase().indexOf("surepost") != -1) { // SurePost uses USPS for "last mile"
+				var trackingId = json.trackDetails[0].additionalInformation.postalServiceTrackingID;
+				var service = new NullService();
+				var errorRcvd = false;
+				var uspsStatus = -1;
+				//var extraDetails = [];
+				var extraMetadata = {};
+
+Mojo.Log.info("UPS checking tracking from USPS " + trackingId);
+
+				var statusCallback = function(pkgStatus, force) {
+Mojo.Log.info("UPS - USPS status " + pkgStatus);
+						uspsStatus = pkgStatus;
+					};
+				var detailsCallback = function(uspsDetails, force, additive) {
+Mojo.Log.info("UPS - USPS details " + JSON.stringify(uspsDetails));
+					if (!errorRcvd) {
+							if (uspsStatus > status) {
+								status = uspsStatus;
+Mojo.Log.info("UPS new status " + status);
+							}
+
+							if (uspsStatus > 0) {
+Mojo.Log.info("UPS details from USPS " + JSON.stringify(uspsDetails));
+Mojo.log.info("UPS old details " + JSON.stringify(details));
+
+								details = uspsDetails.concat(details);
+Mojo.Log.info("UPS final details " + JSON.stringify(details));
+							}
+
+							this.callbackStatus(status);
+
+							if (details.length > 0) {
+								this.callbackDetails(details.clone());
+							}
+						}
+					};
+				var metadataCallback = function(data) {
+						extraMetadata = data;
+					};
+				var errorCallback = function(message) {
+						errorRcvd = true;
+
+						this.callbackStatus(status);
+
+						if (details.length > 0) {
+							this.callbackDetails(details.clone());
+						}
+					};
+
+				for (var i = 0; i < SERVICES.length; i++) {
+					if ("USPS" == SERVICES[i].name) {
+						service = Object.clone(SERVICES[i].serviceobject);
+					}
+				}
+				delayUpdate = true;
+				service.init(trackingId, statusCallback.bind(this), detailsCallback.bind(this), metadataCallback.bind(this), errorCallback.bind(this)); // , PARCELS[this.id]);
+				service.getDetails();
+			}
+	}
+
+	if (!delayUpdate) {
+		this.callbackStatus(status);
+
+		if (details.length > 0) {
+			this.callbackDetails(details.clone());
+		}
+	}
+	*/
 
 	this.callbackStatus(status);
 

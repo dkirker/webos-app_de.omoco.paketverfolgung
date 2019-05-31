@@ -75,6 +75,7 @@ Mojo.Log.info("USPS statusText: " +statusText);
 	// in-transit + special: 4 (out for delivery)
 	// delivered: 5
 	// alert: 3 (for now)
+	// held at post office: 4
 	// status not available: 0
 	// error: 0
 	// not trackable: 0
@@ -85,30 +86,32 @@ Mojo.Log.info("USPS statusText: " +statusText);
 
 
 	var status = 0;
-	if (statusText.toLowerCase().indexOf("pre shipment") != -1 ||
-		statusText.toLowerCase().indexOf("pre-shipment") != -1 ||
-		statusText.toLowerCase().indexOf("on its way to usps") != -1 ||
-		statusText.toLowerCase().indexOf("label created") != -1 ||
-		statusText.toLowerCase().indexOf("currently awaiting package") != -1) {
+	var statusTextLower = statusText.toLowerCase();
+	if (statusTextLower.indexOf("pre shipment") != -1 ||
+		statusTextLower.indexOf("pre-shipment") != -1 ||
+		statusTextLower.indexOf("on its way to usps") != -1 ||
+		statusTextLower.indexOf("label created") != -1 ||
+		statusTextLower.indexOf("currently awaiting package") != -1) {
 		status = 1;
-	} else if (statusText.toLowerCase().indexOf("accepted") != -1) {
+	} else if (statusTextLower.indexOf("accepted") != -1) {
 		status = 2;
-	} else if (statusText.toLowerCase().indexOf("out for delivery") != -1 ||
-			   statusText.toLowerCase().indexOf("out-for-delivery") != -1 ||
-               statusText.toLowerCase().indexOf("delivery attempt") != -1 ||
-               statusText.toLowerCase().indexOf("notice left") != -1) {
+	} else if (statusTextLower.indexOf("out for delivery") != -1 ||
+		statusTextLower.indexOf("out-for-delivery") != -1 ||
+statusTextLower.indexOf("delivery attempt") != -1 ||
+statusTextLower.indexOf("notice left") != -1 ||
+statusTextLower.indexOf("held at post office") != -1) {
 		status = 4;
-	} else if (statusText.toLowerCase().indexOf("in transit") != -1 ||
-			   statusText.toLowerCase().indexOf("in-transit") != -1 ||
-			   statusText.toLowerCase().indexOf("alert") != -1) {
-        status = 3;
-    } else if (statusText.toLowerCase().indexOf("delivered") != -1) {
+	} else if (statusTextLower.indexOf("in transit") != -1 ||
+		statusTextLower.indexOf("in-transit") != -1 ||
+		statusTextLower.indexOf("alert") != -1) {
+status = 3;
+} else if (statusTextLower.indexOf("delivered") != -1) {
 		status = 5;
 	} else {
 		status = 0;
 	}
 
-	this.callbackStatus(status, true);
+	//this.callbackStatus(status, true);
 
     // <div class="package-note">
     //  <h3>Expected Delivery Day:</h3>
@@ -163,11 +166,24 @@ Mojo.Log.info("USPS serviceStr: " + serviceStr);
 				metadata.serviceclass = dataLayer.product;
 			} else if (dataLayer.ecommerce &&
 				dataLayer.ecommerce.impressions && dataLayer.ecommerce.impressions.length > 0) {
+				var impressions = dataLayer.ecommerce.impressions;
 				/*if (dataLayer.ecommerce.impressions[0].category.toLowerCase().indexOf("location not available") != -1) {
 					status = 0;
 				}*/
-				if (dataLayer.ecommerce.impressions[0].name && dataLayer.ecommerce.impressions[0].name !== "Product Name Not Available") {
-					metadata.serviceclass = dataLayer.ecommerce.impressions[0].name;
+				if (impressions[0].name && impressions[0].name !== "Product Name Not Available") {
+					metadata.serviceclass = impressions[0].name;
+Mojo.Log.info("USPS serviceStr: " + metadata.serviceclass);
+
+Mojo.Log.info("USPS impressions[0].dimension149="+impressions[0].dimension149);
+					var features = (impressions[0].dimension149) ? impressions[0].dimension149.split("|") : [];
+					for (var i = 0; i < features.length; i++) {
+						var featureLower = features[i].toLowerCase();
+
+						if (featureLower.indexOf("usps tracking") == -1) {
+							metadata.serviceclass += ", " + features[i].trim();
+						}
+					}
+Mojo.Log.info("USPS serviceStr: " + metadata.serviceclass);
 				}
 			}
 		}
@@ -199,21 +215,40 @@ Mojo.Log.info("USPS tmpDateStr: " + tmpDateStr);
 					status = 0;
 				}			
 			} else {*/
+
+			/*
                 tmpLoc = detailsText[i].split("<br/>")[1].split("</p>")[0].replace(/[\r]/g, " ").replace(/&nbsp;/g, " ").trim();
                 tmpNotes = detailsText[i].split("<p>")[1].split("<br/>")[0].replace(/[\r]/g, " ").replace(/&nbsp;/g, " ").replace(/,/g, " ").trim();
+			*/
+			
+			var detailsBlock = detailsText[i].split("</p>")[0].split("<p>")[1].split("<br/>");
+
+			tmpNotes = detailsBlock[0].replace(/[\r]/g, " ").replace(/&nbsp;/g, " ").replace(/,$/, " ").trim();
+			tmpLoc = detailsBlock[1].replace(/[\r]/g, " ").replace(/&nbsp;/g, " ").trim();
+			if (detailsBlock.length > 2) {
+				for (var j = 2; j < detailsBlock.length; j++) {
+					tmpNotes += "<br/>" + detailsBlock[j].replace(/[\r]/g, " ").replace(/&nbsp;/g, " ").trim();
+				}
+			}
+
 			//}
 Mojo.Log.info("USPS tmpLoc: " + tmpLoc);
 Mojo.Log.info("USPS tmpNotes: " +tmpNotes);
 
-			if (i == 1) {
-				if (tmpNotes.toLowerCase().indexOf("out for delivery") != -1) {
+			//if (i == 1) {
+				if (detailsText.length == 2 && tmpNotes.toLowerCase().indexOf("usps expects item for mailing") != -1) {
+					status = 1;
+				} else if (status < 4 && tmpNotes.toLowerCase().indexOf("out for delivery") != -1) {
 					status = 4;
-					this.callbackStatus(status);
-				} else if (tmpNotes.toLowerCase().indexOf("delivery status not updated") != -1) {
+					//this.callbackStatus(status);
+				} else if (i == 1 && tmpNotes.toLowerCase().indexOf("delivery status not updated") != -1) {
 					status = 0;
-					this.callbackStatus(status);
+					//this.callbackStatus(status);
+				} else if (status < 4 && tmpNotes.toLowerCase().indexOf("held at post office") != -1) {
+					status = 4;
+					//this.callbackStatus(status);
 				}
-			}
+			//}
 			details.push({date: tmpDateStr, location: tmpLoc, notes: tmpNotes});
 		}
 
@@ -238,7 +273,7 @@ Mojo.Log.info("USPS detailFrag: " + detailFrag);
 			}
 		}
 		
-		//this.callbackStatus(status);
+		this.callbackStatus(status, true);
 		this.callbackDetails(details.clone());	
 	} else {
 		var useDefaultErrorHandling = true;
@@ -275,10 +310,10 @@ Mojo.Log.info("USPS errorFrag: " + errorFrag);
 
 			for (var i = 0; i < errorParts.length; i++) {
 				if (i > 0)
-					errorText = errorText + " ";
-				errorText = errorText + errorParts[i].split("</p>")[0].substr(1).trim(); //.split(">")[1].trim();
+					errorText += " ";
+				errorText += errorParts[i].split("</p>")[0].substr(1).trim(); //.split(">")[1].trim();
 			}
-			errorText = errorText + " Check the tracking number and try again.";
+			errorText += " Check the tracking number and try again.";
 		}
 
 		if (errorText != "") {

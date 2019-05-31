@@ -2,6 +2,7 @@
     {"source": "app/assistants/app-assistant.js"},
     {"source": "app/assistants/stage-assistant.js"},
     {"source": "javascripts/DateFormat.js"},
+    {"source": "javascripts/ApiKeys.js"},
     {"source": "javascripts/Globals.js"},
     {"source": "javascripts/Parcel.js"},
     {"source": "javascripts/sha1.js"},

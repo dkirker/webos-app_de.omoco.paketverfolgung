@@ -113,7 +113,7 @@ MainDialogAssistant.prototype.dbFailure = function(event) {
 
 MainDialogAssistant.prototype.save = function(event) {
 	for(var i=0; i<PARCELS.length; i++) {
-		if(PARCELS[i].parcelid == idmodel['original']) {
+		if(PARCELS[i].parcelid == idmodel['original'] && PARCELS[i].servicename == selectorsModel.type) {
 			Mojo.Controller.getAppController().showBanner({messageText: $L("Package already exists!")}, "", "");
 			return;
 		}

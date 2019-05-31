@@ -13,7 +13,7 @@ MainAssistant.prototype.setup = function() {
 		replace: false
 	};
 	this.parcelsDepot = new Mojo.Depot(depotoptions, this.dbSuccess, this.dbFailure);
-	
+
 	var tmpMenuItems = [];
 	
 	if(AUTOSORT == 0)
@@ -381,7 +381,7 @@ MainAssistant.prototype.liteversion2 = function(opencatalog) {
 
 MainAssistant.prototype.itemTap = function(event) {
 	//Mojo.Controller.stageController.pushScene("details", event.index);
-	Mojo.Controller.getAppController().getStageController('main').pushScene("details", event.item.parcelid);
+	Mojo.Controller.getAppController().getStageController('main').pushScene("details", event.item.parcelid, event.item.servicename);
 }
 
 MainAssistant.prototype.autoSortParcels = function(event){

@@ -8,6 +8,7 @@ function Parcel(id, callback) {
 	
 	this.id = id;
 	this.parcelid = PARCELS[this.id].parcelid;
+	this.servicename = PARCELS[this.id].servicename;
 	this.callback = callback;
 	
 	this.alreadynotified = false;
@@ -16,7 +17,7 @@ function Parcel(id, callback) {
 Parcel.prototype.refresh = function() {
 	var nothingfound = true;
 	for(var i=0; i<PARCELS.length; i++) {
-		if(PARCELS[i].parcelid == this.parcelid) {
+		if(PARCELS[i].parcelid == this.parcelid && PARCELS[i].servicename == this.servicename) {
 			this.id = i;
 			nothingfound = false;
 			break;
@@ -36,14 +37,14 @@ Parcel.prototype.refresh = function() {
 		}
 	}
 	service.init(PARCELS[this.id].parcelid, this.callbackStatus.bind(this), this.refreshDetails.bind(this),
-				 this.callbackMetadata.bind(this), this.refreshError.bind(this));
+				 this.callbackMetadata.bind(this), this.refreshError.bind(this)); // , PARCELS[this.id]);
 	service.getDetails();
 };
 
 Parcel.prototype.callbackStatus = function(status, force) {
 	var nothingfound = true;
 	for(var i=0; i<PARCELS.length; i++) {
-		if(PARCELS[i].parcelid == this.parcelid) {
+		if(PARCELS[i].parcelid == this.parcelid && PARCELS[i].servicename == this.servicename) {
 			this.id = i;
 			nothingfound = false;
 			break;
@@ -76,7 +77,7 @@ Parcel.prototype.callbackMetadata = function(data) {
     var nothingfound = true;
 	var dataupdated = false;
     for(var i=0; i<PARCELS.length; i++) {
-        if(PARCELS[i].parcelid == this.parcelid) {
+        if(PARCELS[i].parcelid == this.parcelid && PARCELS[i].servicename == this.servicename) {
             this.id = i;
             nothingfound = false;
             break;
@@ -87,11 +88,11 @@ Parcel.prototype.callbackMetadata = function(data) {
         return;
     }
 
-	if (data.delivery) {
+	if (data.delivery !== undefined) {
 		PARCELS[this.id].deliverydate = data.delivery;
 		dataupdated = true;
 	}
-	if (data.serviceclass) {
+	if (data.serviceclass !== undefined) {
 		PARCELS[this.id].serviceclass = data.serviceclass;
 		dataupdated = true;
 	}
@@ -105,7 +106,7 @@ Parcel.prototype.refreshDetails = function(detailsParam, force, additive) {
 	var nothingfound = true;
 	var details = detailsParam;
 	for(var i=0; i<PARCELS.length; i++) {
-		if(PARCELS[i].parcelid == this.parcelid) {
+		if(PARCELS[i].parcelid == this.parcelid && PARCELS[i].servicename == this.servicename) {
 			this.id = i;
 			nothingfound = false;
 			break;

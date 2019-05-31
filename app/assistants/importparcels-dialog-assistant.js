@@ -199,7 +199,7 @@ ImportparcelsDialogAssistant.prototype.parseImport = function(importText) {
 						
 						var alreadyExists = false;
 						for(var iii = 0; iii < PARCELS.length; iii++) {
-							if(sendung.parcelid == PARCELS[iii].parcelid) {
+							if(sendung.parcelid == PARCELS[iii].parcelid && sendung.servicename == PARCELS[iii].servicename) {
 								alreadyExists = true;
 							}
 						}

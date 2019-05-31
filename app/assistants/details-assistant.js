@@ -1,6 +1,6 @@
-function DetailsAssistant(parcelid) {
+function DetailsAssistant(parcelid, servicename) {
 	for(var i=0; i<PARCELS.length; i++) {
-		if(PARCELS[i].parcelid == parcelid) {
+		if(PARCELS[i].parcelid == parcelid && PARCELS[i].servicename == servicename) {
 			this.id = i;
 			break;
 		}
@@ -166,7 +166,7 @@ DetailsAssistant.prototype.loadData = function() {
 	if (PARCELS[this.id].serviceclass) {
 		detailsHtml += $L("<tr><td colspan=2><b>Service Class:</b></td></tr><tr><td colspan=2>") + PARCELS[this.id].serviceclass + "</td></tr>";
 	}
-	if (PARCELS[this.id].deliverydate) {
+	if (PARCELS[this.id].deliverydate !== undefined && PARCELS[this.id].deliverydate !== null && PARCELS[this.id].deliverydate != "") {
 		detailsHtml += $L("<tr><td colspan=2><b>Expected Delivery:</b></td></tr><tr><td colspan=2>") + PARCELS[this.id].deliverydate + "</td></tr>";
 	}
 	detailsHtml	+= "</table>";
@@ -201,8 +201,10 @@ DetailsAssistant.prototype.loadData = function() {
 			invertIcons = "i";
 		var imgBaseDir = "images";
 
-		if (PARCELS[this.id].servicename == "Papa John's")
+		if (PARCELS[this.id].servicename == "Papa John's") {
 			imgBaseDir = "images/papatrack";
+			invertIcons = "";
+		}
 		var isPapaJohnsDelivery = function(id) {
 				return (PARCELS[id].servicename == "Papa John's" &&
 						PARCELS[id].parcelid.toLowerCase().indexOf("delivery") != -1);
@@ -256,7 +258,7 @@ DetailsAssistant.prototype.loadData = function() {
 			}
 		}
 		
-		service.init(PARCELS[this.id].parcelid, this.callbackStatus.bind(this), this.refreshDetails.bind(this), this.callbackMetadata.bind(this), this.refreshError.bind(this));
+		service.init(PARCELS[this.id].parcelid, this.callbackStatus.bind(this), this.refreshDetails.bind(this), this.callbackMetadata.bind(this), this.refreshError.bind(this)); // , PARCELS[this.id]);
 		this.trackingUrl = service.getTrackingUrl();
 		if(COLORDETAILS)
 			this.controller.document.body.style.backgroundColor = service.getColor();
@@ -293,7 +295,6 @@ DetailsAssistant.prototype.mapRefresh = function(location, locations) {
 		var mapzoom = 10;
 		var mapheight = 110;
 		var mapwidth = 301;
-		var mapkey = "INSERT_GOOGLE_MAPS_API_KEY_HERE";
 		var uiScale = getPlatformUiScale();
 
 		if (this.controller.get('map').name == "zoom1") {
@@ -308,11 +309,11 @@ DetailsAssistant.prototype.mapRefresh = function(location, locations) {
 		mapwidth = Math.ceil(mapwidth * uiScale);
 		mapheight = Math.ceil(mapheight * uiScale);
 
-		var mapurl = "http://maps.google.com/maps/api/staticmap?key=" + mapkey + "&center=" + escape(this.lastMapLocation.replace("&nbsp", " ").replace(/ +(?= )/g,'').replace(/[^a-zA-Z 0-9]+/g, '')) + "&zoom=" + mapzoom + "&size=" + mapwidth + "x" + mapheight + "&maptype=roadmap&sensor=false";
+		var mapurl = "http://maps.google.com/maps/api/staticmap?key=" + MAP_API_KEY + "&center=" + escape(this.lastMapLocation.replace("&nbsp", " ").replace(/ +(?= )/g,'').replace(/[^a-zA-Z 0-9]+/g, '')) + "&zoom=" + mapzoom + "&size=" + mapwidth + "x" + mapheight + "&maptype=roadmap&sensor=false";
 		
 		if (this.controller.get('map').name == "zoom3") {
 			mapheight = Math.ceil(233 * uiScale);
-			mapurl = "http://maps.google.com/maps/api/staticmap?key=" + mapkey + "&center=40,0&zoom=0&size=" + mapwidth + "x" + mapheight + "&maptype=roadmap&sensor=false";
+			mapurl = "http://maps.google.com/maps/api/staticmap?key=" + MAP_API_KEY + "&center=40,0&zoom=0&size=" + mapwidth + "x" + mapheight + "&maptype=roadmap&sensor=false";
 		}
 		
 		var maplocations = "";
@@ -430,8 +431,10 @@ DetailsAssistant.prototype.callbackStatus = function(status, force) {
 		invertIcons = "i";
 
 	var imgBaseDir = "images";
-	if (PARCELS[this.id].servicename == "Papa John's")
+	if (PARCELS[this.id].servicename == "Papa John's") {
 		imgBaseDir = "images/papatrack";
+		invertIcons = "";
+	}
 	var isPapaJohnsDelivery = function(id) {
 			return (PARCELS[id].servicename == "Papa John's" &&
 					PARCELS[id].parcelid.toLowerCase().indexOf("delivery") != -1);
@@ -476,11 +479,11 @@ DetailsAssistant.prototype.callbackStatus = function(status, force) {
 DetailsAssistant.prototype.callbackMetadata = function(data) {
     var dataupdated = false;
 
-    if (data.delivery) {
+    if (data.delivery !== undefined) {
         PARCELS[this.id].deliverydate = data.delivery;
         dataupdated = true;
     }
-	if (data.serviceclass) {
+	if (data.serviceclass !== undefined) {
 		PARCELS[this.id].serviceclass = data.serviceclass;
 		dataupdated = true;
 	}
@@ -580,7 +583,7 @@ DetailsAssistant.prototype.notify = function() {
     if (PARCELS[this.id].serviceclass) {
         detailsHtml += $L("<tr><td colspan=2><b>Service Class:</b></td></tr><tr><td colspan=2>") + PARCELS[this.id].serviceclass + "</td></tr>";
     }
-	if (PARCELS[this.id].deliverydate) {
+	if (PARCELS[this.id].deliverydate !== undefined && PARCELS[this.id].deliverydate !== null && PARCELS[this.id].deliverydate != "") {
 		detailsHtml += $L("<tr><td colspan=2><b>Expected Delivery:</b></td></tr><tr><td colspan=2>") + PARCELS[this.id].deliverydate + "</td></tr>";
 	}
     detailsHtml += "</table>";

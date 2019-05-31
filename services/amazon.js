@@ -63,9 +63,9 @@ Mojo.Log.info("AMZ unable to read details");
 };
 	
 Amazon.prototype.getDetailsA = function(response) {
-Mojo.Log.info("AMZ tracking # " + this.id);
+Mojo.Log.info("AMZ-A tracking # " + this.id);
 	var responseText = response.responseText;
-Mojo.Log.info("AMZ responseText: " +responseText);
+Mojo.Log.info("AMZ-A responseText: " +responseText);
 //	var statusText = "";
 //Mojo.Log.info("AMZ statusFrag: " + statusText);
 
@@ -82,7 +82,7 @@ Mojo.Log.info("AMZ responseText: " +responseText);
 	} else {
 		status = 1; //0;
 	}
-Mojo.Log.info("AMZ status: " +status);
+Mojo.Log.info("AMZ-A status: " +status);
 	// Defer this
 	//this.callbackStatus(status);
 
@@ -97,7 +97,7 @@ Mojo.Log.info("AMZ status: " +status);
 	if (deliveryStr != "") {
 		metadata.delivery = deliveryStr;
 	}
-Mojo.Log.info("AMZ deliveryStr: " +deliveryStr);
+Mojo.Log.info("AMZ-A deliveryStr: " +deliveryStr);
 
 	var serviceStr = "";
 	if (serviceStr != "") {
@@ -119,13 +119,13 @@ Mojo.Log.info("AMZ deliveryStr: " +deliveryStr);
 		} else {
 			dayMonthText = Mojo.Format.formatDate(new Date(), {date: "long"});
 		}
-Mojo.Log.info("AMZ dayMonthText: " +dayMonthText);
+Mojo.Log.info("AMZ-A dayMonthText: " +dayMonthText);
 		var detailsText = responseText.split("ship-track-time-grid\">");
 		for (var i = 1; i < detailsText.length; i++) {
 			var detailText = detailsText[i];
-Mojo.Log.info("AMZ detailsText[" + i + "]: " + detailsText[i]);
+Mojo.Log.info("AMZ-A detailsText[" + i + "]: " + detailsText[i]);
 			var tmpDateStr = dayMonthText + " " + detailText.split("ship-track-fixed-column-top\">")[1].split("</div>")[0].trim();
-Mojo.Log.info("AMZ tmpDateStr: " + tmpDateStr);
+Mojo.Log.info("AMZ-A tmpDateStr: " + tmpDateStr);
 			var tmpDetailsStr = detailText.split("ship-track-grid-responsive-column")[1].split("</div>")[0].trim();
 			var tmpNotes = tmpDetailsStr.split("<span>")[1].split("</span>")[0].trim();
 			var tmpLocFrag = tmpDetailsStr.split("class=\"a-color-secondary\">");
@@ -135,26 +135,26 @@ Mojo.Log.info("AMZ tmpDateStr: " + tmpDateStr);
 				tmpLoc = tmpLocFrag[1].split("</span>")[0].trim();
 			}
 
-			if ((tmpNotes.indexOf("Delivered") != -1 || tmpNotes.indexOf("Available for pickup") != -1) && status < 5) {
+			if (status < 5 && (tmpNotes.indexOf("Delivered") != -1 || tmpNotes.indexOf("Available for pickup") != -1)) {
 				status = 5;
-			} else if (tmpNotes.indexOf("Out for delivery") != -1 && status < 4) {
+			} else if (status < 4 && tmpNotes.indexOf("Out for delivery") != -1) {
 				status = 4;
-			} else if ((tmpNotes.indexOf("Package has left the carrier facility") != -1 || tmpNotes.indexOf("Shipment departed") != -1 ||
+			} else if (status < 3 && (tmpNotes.indexOf("Package has left the carrier facility") != -1 || tmpNotes.indexOf("Shipment departed") != -1 ||
 					    tmpNotes.indexOf("Package has been") != -1 || tmpNotes.indexOf("Package received") != -1 ||
-					    tmpNotes.indexOf("Package arrived") != -1 || tmpNotes.indexOf("Shipment arrived") != -1) && status < 3) {
+					    tmpNotes.indexOf("Package arrived") != -1 || tmpNotes.indexOf("Shipment arrived") != -1)) {
 				status = 3;
-			} else if (tmpNotes.indexOf("Package has left seller facility and is in transit to carrier") != -1 && status < 2) {
+			} else if (status < 2 && tmpNotes.indexOf("Package has left seller facility and is in transit to carrier") != -1) {
 				status = 2;
 			} else if (status && responseText.indexOf("<h4 class=\"a-alert-heading\">Delayed") != -1) {
 				status = 0;
 			}
-Mojo.Log.info("latest AMZ status: " + status);
-Mojo.Log.info("AMZ tmpLoc: " + tmpLoc);
-Mojo.Log.info("AMZ tmpNotes: " +tmpNotes);
+Mojo.Log.info("latest AMZ-A status: " + status);
+Mojo.Log.info("AMZ-A tmpLoc: " + tmpLoc);
+Mojo.Log.info("AMZ-A tmpNotes: " +tmpNotes);
 			if (detailText.indexOf("a-color-alternate-background") != -1 &&
 				detailText.indexOf("a-text-bold") != -1) {
 				dayMonthText = detailText.split("a-text-bold\">")[1].split("</span>")[0].trim();
-Mojo.Log.info("AMZ dayMonthText: " +dayMonthText);
+Mojo.Log.info("AMZ-A dayMonthText: " +dayMonthText);
 			}
 			details.push({date: tmpDateStr, location: tmpLoc, notes: tmpNotes});
 		}
@@ -175,9 +175,9 @@ Mojo.Log.info("AMZ dayMonthText: " +dayMonthText);
 };
 
 Amazon.prototype.getDetailsB = function(response) {
-Mojo.Log.info("AMZ tracking # " + this.id);
+Mojo.Log.info("AMZ-B tracking # " + this.id);
 	var responseText = response.responseText;
-Mojo.Log.info("AMZ responseText: " +responseText);
+Mojo.Log.info("AMZ-B responseText: " +responseText);
 //	var statusText = "";
 //Mojo.Log.info("AMZ statusFrag: " + statusText);
 
@@ -214,7 +214,7 @@ Mojo.Log.info("AMZ status: " +status);*/
 
 	if (aStateStr.length > 1) {
 		aStateStr = aStateStr[1].split("\">")[1].split("</script>")[0];
-Mojo.Log.info("AMZ aStateStr = " + aStateStr);
+Mojo.Log.info("AMZ-B aStateStr = " + aStateStr);
 		aStateJson = JSON.parse(aStateStr);
 	}
 
@@ -225,10 +225,12 @@ Mojo.Log.info("AMZ aStateStr = " + aStateStr);
 	// SHIPPED
 	// IN_TRANSIT
 	// OUT_FOR_DELIVERY
+	// AVAILABLE_FOR_PICKUP
 	// DELIVERED
+	// PICKED_UP
 	if (aStateJson != {} && aStateJson.promise && aStateJson.promise.promiseMessage) {
 		deliveryStr = aStateJson.promise.promiseMessage;
-Mojo.Log.info("AMZ aState deliveryStr = " + deliveryStr);
+Mojo.Log.info("AMZ-B aState deliveryStr = " + deliveryStr);
 	} else if (deliveryFrag.length > 1) {
 		deliveryStr = deliveryFrag[1].split("<span class=\"nowrap\">")[1].split("</span>")[0].trim();
 	}
@@ -243,7 +245,7 @@ Mojo.Log.info("AMZ aState deliveryStr = " + deliveryStr);
 	if (deliveryStr != "") {
 		metadata.delivery = deliveryStr;
 	}
-Mojo.Log.info("AMZ deliveryStr: " +deliveryStr);
+Mojo.Log.info("AMZ-B deliveryStr: " +deliveryStr);
 
 	var serviceStr = "";
 	if (serviceStr != "") {
@@ -255,16 +257,19 @@ Mojo.Log.info("AMZ deliveryStr: " +deliveryStr);
 	}
 
 	// Better handling of status
+	var shortStatus = null;
 	if (aStateJson != {} && aStateJson.shortStatus) {
-		var shortStatus = aStateJson.shortStatus.toLowerCase();
+		shortStatus = aStateJson.shortStatus.toLowerCase();
 		var shortStatusMap = {
 				"ordered": 1,
 				"shipped": 2,
 				"in_transit": 3,
 				"out_for_delivery": 4,
+				"available_for_pickup": 4, // 5? Or should this be a new class?
+				"picked_up": 5,
 				"delivered": 5
 			};
-Mojo.Log.info("AMZ shortStatus: " + shortStatus);
+Mojo.Log.info("AMZ-B shortStatus: " + shortStatus);
 
 		if (shortStatusMap.hasOwnProperty(shortStatus)) {
 			status = shortStatusMap[shortStatus];
@@ -278,7 +283,14 @@ Mojo.Log.info("AMZ shortStatus: " + shortStatus);
 			this.callbackStatus(0);
 		}
 	}
-Mojo.Log.info("AMZ new status: " + status);
+Mojo.Log.info("AMZ-B new status: " + status);
+
+
+	// If status is delivered, see if the delivery photo exists! We can add support for delivery photos and signed-for/proof-of-delivery images!
+	// <div id="photoOnDelivery-container" class="a-row a-spacing-small widgetContainer">
+	//
+	//     <img alt="" src="https://us-prod-temp.s3.amazonaws.com/imageId-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Date=20190313T231049Z&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Expires=521350&amp;X-Amz-Credential=AKIAJB4SCPO5JPGKY7AQ%2F20190313%2Fus-east-1%2Fs3%2Faws4_request&amp;X-Amz-Signature=cce13e75953efa21d4c09a766d42283b1fd73c7b156ed2c91d0f22d954441c90">
+	//
 
 	var details = [];
 	if (status > 0) {
@@ -286,33 +298,34 @@ Mojo.Log.info("AMZ new status: " + status);
 		var dayRow = responseText.split("<div class=\"a-row tracking-event-date-header\">");
 		for (var j = 1; j < dayRow.length; j++) { // Date Row
             dayMonthText = dayRow[j].split("<span class=\"tracking-event-date\">")[1].split("</span>")[0].trim();
-Mojo.Log.info("AMZ dayMonthText: " +dayMonthText);
+Mojo.Log.info("AMZ-B dayMonthText: " +dayMonthText);
             
             var detailsText = dayRow[j].split("<div class=\"a-row a-spacing-large a-spacing-top-medium\">");
             for (var i = 1; i < detailsText.length; i++) {
                 var detailText = detailsText[i];
-    Mojo.Log.info("AMZ detailsText[" + i + "]: " + detailsText[i]);
+    Mojo.Log.info("AMZ-B detailsText[" + i + "]: " + detailsText[i]);
                 var tmpDateStr = dayMonthText + " " + detailText.split("<span class=\"tracking-event-time\">")[1].split("</span>")[0].trim();
-    Mojo.Log.info("AMZ tmpDateStr: " + tmpDateStr);
+    Mojo.Log.info("AMZ-B tmpDateStr: " + tmpDateStr);
                 var tmpNotes = detailText.split("<span class=\"tracking-event-message\">")[1].split("</span>")[0].trim();
                 var tmpLoc = detailText.split("<span class=\"tracking-event-location\">")[1].split("</span")[0].trim();
 
-                if ((tmpNotes.indexOf("Delivered") != -1 || tmpNotes.indexOf("Available for pickup") != -1) && status < 5) {
+				var tmpNotesLower = tmpNotes.toLowerCase();
+                if (status < 5 && ((tmpNotesLower.indexOf("delivered") != -1 && shortStatus != "available_for_pickup") || tmpNotesLower.indexOf("package picked up") != -1)) {
                     status = 5;
-                } else if (tmpNotes.indexOf("Out for delivery") != -1 && status < 4) {
+                } else if (status < 4 && (tmpNotesLower.indexOf("out for delivery") != -1 || tmpNotesLower.indexOf("available for pickup") != -1)) {
                     status = 4;
-                } else if ((tmpNotes.indexOf("Package has left the carrier facility") != -1 || tmpNotes.indexOf("Shipment departed") != -1 ||
-                            tmpNotes.indexOf("Package has been") != -1 || tmpNotes.indexOf("Package received") != -1 ||
-                            tmpNotes.indexOf("Package arrived") != -1 || tmpNotes.indexOf("Shipment arrived") != -1) && status < 3) {
+                } else if (status < 3 && (tmpNotesLower.indexOf("package has left the carrier facility") != -1 || tmpNotesLower.indexOf("shipment departed") != -1 ||
+                            tmpNotesLower.indexOf("package has been") != -1 || tmpNotesLower.indexOf("package received") != -1 ||
+                            tmpNotesLower.indexOf("package arrived") != -1 || tmpNotesLower.indexOf("shipment arrived") != -1)) {
                     status = 3;
-                } else if (tmpNotes.indexOf("Package has left seller facility and is in transit to carrier") != -1 && status < 2) {
+                } else if (status < 2 && tmpNotesLower.indexOf("package has left seller facility and is in transit to carrier") != -1) {
                     status = 2;
                 } else if (status && responseText.indexOf("<h4 class=\"a-alert-heading\">Delayed") != -1) {
                     status = 0;
                 }
-    Mojo.Log.info("latest AMZ status: " + status);
-    Mojo.Log.info("AMZ tmpLoc: " + tmpLoc);
-    Mojo.Log.info("AMZ tmpNotes: " +tmpNotes);
+    Mojo.Log.info("latest AMZ-B status: " + status);
+    Mojo.Log.info("AMZ-B tmpLoc: " + tmpLoc);
+    Mojo.Log.info("AMZ-B tmpNotes: " + tmpNotes);
 
                 details.push({date: tmpDateStr, location: tmpLoc, notes: tmpNotes});
             }

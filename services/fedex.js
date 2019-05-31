@@ -55,7 +55,7 @@ FedEx.prototype.getDetails = function() {
 	*/
 
 	var dataStringified = Object.toJSON(data);
-	Mojo.Log.info("Data: ", dataStringified);
+	Mojo.Log.info("FedEx Data: ", dataStringified);
 
 	var request = new Ajax.Request("https://www.fedex.com/trackingCal/track", {
 		method: 'post',
@@ -88,8 +88,8 @@ FedEx.prototype.getDetailsRequestSuccess = function(response) {
 		keyStatus = keyStatus.toLowerCase();
 	}
 
-	Mojo.Log.info("errorCode: ", errorCode, "keyStatus: ", keyStatus);
-Mojo.Log.info("JSON: ", response.responseText);
+	Mojo.Log.info("FedEx errorCode: ", errorCode, "keyStatus: ", keyStatus);
+Mojo.Log.info("FedEx JSON: ", response.responseText);
 	// TODO: I am only certain on "errorCode" and "keyStatus" == "In transit"
 	if (errorCode != 0) {
 		status = -1;
@@ -115,6 +115,26 @@ Mojo.Log.info("JSON: ", response.responseText);
 		metadata.serviceclass = json.TrackPackagesResponse.packageList[0].trackingCarrierDesc;
 	}
 
+	var serviceDetails = [];
+	if (json.TrackPackagesResponse.packageList[0].serviceDesc &&
+		json.TrackPackagesResponse.packageList[0].serviceDesc != "") {
+		serviceDetails.push(json.TrackPackagesResponse.packageList[0].serviceDesc);
+	}
+	if (json.TrackPackagesResponse.packageList[0].packaging &&
+		json.TrackPackagesResponse.packageList[0].packaging != "") {
+		serviceDetails.push(json.TrackPackagesResponse.packageList[0].packaging);
+	}
+	if (serviceDetails.length > 0) {
+		var serviceStr = "";
+
+		for (var i = 0; i < serviceDetails.length; i++) {
+			if (i > 0)
+				serviceStr += ", ";
+			serviceStr += serviceDetails[i];
+		}
+		metadata.serviceclass += "<br/>(" + serviceStr + ")";
+	}
+
 	if (metadata != {}) {
 		this.callbackMetadata(metadata);
 	}
@@ -124,9 +144,16 @@ Mojo.Log.info("JSON: ", response.responseText);
 		var detailsVar = json.TrackPackagesResponse.packageList[0].scanEventList;
 		for (var i = 0; i < detailsVar.length; i++) {
 			var tmpDate = detailsVar[i].date + " " + detailsVar[i].time + " " + detailsVar[i].gmtOffset;
-			Mojo.Log.info("date: ", tmpDate, " location: ", detailsVar[i].scanLocation, " notes: ", detailsVar[i].status);
-			details.push({date: tmpDate, location: detailsVar[i].scanLocation, notes: detailsVar[i].status});
-			if (detailsVar[i].status.toLowerCase().indexOf("delivery") != -1 && status < 4) {
+			var tmpLoc = detailsVar[i].scanLocation;
+			var tmpNotes = detailsVar[i].status;
+
+			if (detailsVar[i].scanDetails && detailsVar[i].scanDetails != "") {
+				tmpNotes += "<br/><br/>" + detailsVar[i].scanDetails;
+			}
+
+			Mojo.Log.info("FedEx date: ", tmpDate, " location: ", tmpLoc, " notes: ", tmpNotes);
+			details.push({date: tmpDate, location: tmpLoc, notes: tmpNotes});
+			if (status < 4 && tmpNotes.toLowerCase().indexOf("delivery") != -1) {
 				status = 4; // Hack for "Out for delivery"
 			}
 		}
@@ -140,7 +167,7 @@ Mojo.Log.info("JSON: ", response.responseText);
 };
 
 FedEx.prototype.getDetailsRequestFailure = function(response) {
-	Mojo.Log.info("Status: ", response.statusText, " Response: ", response.responseText, " Headers: ", Object.toJSON(response.headerJSON), "Response JSON: ", Object.toJSON(response.responseJSON));
+	Mojo.Log.info("FedEx Status: ", response.statusText, " Response: ", response.responseText, " Headers: ", Object.toJSON(response.headerJSON), "Response JSON: ", Object.toJSON(response.responseJSON));
 
 	this.callbackError("Konnte Seite nicht laden.");
 };

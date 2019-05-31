@@ -43,6 +43,7 @@ Mojo.Log.info("DHL GM responseText = " + responseText);
 	var status = 0;
 	var statusFrag = responseText.split("class=\"status-info\">");
 	if (statusFrag.length > 1) {
+Mojo.Log.info("DHL GM statusFrag = ", statusFrag);
 		if (statusFrag[1].indexOf("<h2>Picked Up</h2>") != -1) { // Need confirm
 			status = 1;
 		} else if (statusFrag[1].indexOf("<h2>Processed</h2>") != -1) { // Need confirm
@@ -129,3 +130,4 @@ DHLGM.prototype.getDetailsRequestFailure = function(response) {
 };
 
 registerService("DHL Global Mail", new DHLGM());
+
